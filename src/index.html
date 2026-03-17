@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sequencer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #1c1c1e;
+    --surface: #252527;
+    --border: #333336;
+    --text: #d4d4d6;
+    --muted: #5a5a5e;
+    --cell-off: #2e2e31;
+    --cell-off-hover: #363639;
+    --cell-on: #a8a8ab;
+    --cell-playing-bg: #3a3a3d;
+    --indicator: #a8a8ab;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+  }
+
+  .wrapper {
+    width: 100%;
+    max-width: 600px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  h1 {
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .step-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .grid-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .col-indicators {
+    display: flex;
+    gap: 6px;
+    margin-left: 34px;
+    margin-bottom: 10px;
+  }
+
+  .col-indicator {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    transition: background 0.08s;
+  }
+
+  .col-indicator.active-col {
+    background: var(--indicator);
+  }
+
+  .grid-row-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .grid-row-wrapper:last-child { margin-bottom: 0; }
+
+  .row-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--muted);
+    width: 26px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .grid-row {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .cell {
+    flex: 1;
+    aspect-ratio: 1;
+    background: var(--cell-off);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border: none;
+  }
+
+  .cell:hover { background: var(--cell-off-hover); }
+
+  .cell.on { background: var(--cell-on); }
+
+  .cell.playing-col:not(.on) { background: var(--cell-playing-bg); }
+
+  .cell.on.playing-col { background: #c8c8cb; }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 0.78rem;
+    padding: 7px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: background 0.1s, border-color 0.1s;
+  }
+
+  .btn:hover { background: var(--cell-off-hover); }
+
+  .btn-play {
+    background: var(--cell-on);
+    color: var(--bg);
+    border-color: var(--cell-on);
+  }
+
+  .btn-play:hover { background: #c0c0c3; border-color: #c0c0c3; }
+
+  .btn-reset { color: var(--muted); }
+  .btn-reset:hover { color: var(--text); }
+
+  .steps-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+  }
+
+  .steps-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-right: 2px;
+  }
+
+  .col-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+
+  .col-btn:hover { color: var(--text); background: var(--cell-off-hover); }
+
+  .col-btn.selected {
+    background: var(--cell-off);
+    color: var(--text);
+    border-color: var(--muted);
+  }
+
+
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <header>
+    <h1>Sequencer</h1>
+    <span class="step-label" id="beatCounter">—</span>
+  </header>
+
+  <div class="grid-container">
+    <div class="col-indicators" id="colIndicators"></div>
+    <div id="gridRows"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-play" id="btnPlay">Play</button>
+    <button class="btn btn-stop" id="btnStop">Stop</button>
+    <button class="btn btn-reset" id="btnReset">Reset</button>
+
+    <div class="steps-group">
+      <span class="steps-label">Steps</span>
+      <button class="col-btn selected" data-cols="4">4</button>
+      <button class="col-btn" data-cols="8">8</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ── AUDIO ───────────────────────────────────────── */
+const SAMPLE_FILES = ["1_1.wav","1_2.wav","1_3.wav","1_4.wav","1_5.wav"];
+const samples = SAMPLE_FILES.map(f => {
+  const a = new Audio(f);
+  a.preload = "auto";
+  return a;
+});
+
+const SAMPLE_DURATION_MS = 2000; // all samples are exactly 2s
+const ADVANCE_MS = 80;           // fire the next step this many ms before current ends
+
+// Play a sample and return a Promise that resolves ADVANCE_MS before it ends,
+// so the next step can start right on time with no audible gap.
+// For silent steps, just wait the full sample duration minus the advance.
+function playStep(col) {
+  const activeRow = grid.findIndex(row => row[col]);
+
+  if (activeRow !== -1) {
+    return new Promise(resolve => {
+      const clone = samples[activeRow].cloneNode();
+      clone.play().catch(resolve);
+      // Resolve slightly early so next step fires seamlessly
+      setTimeout(resolve, SAMPLE_DURATION_MS - ADVANCE_MS);
+    });
+  } else {
+    return new Promise(resolve => setTimeout(resolve, SAMPLE_DURATION_MS - ADVANCE_MS));
+  }
+}
+
+/* ── STATE ──────────────────────────────────────── */
+const ROWS = 5;
+let cols = 4;
+let grid = makeGrid();
+
+let isPlaying  = false;
+let currentCol = 0;
+let sessionId  = null;
+
+function makeGrid() {
+  return Array.from({ length: ROWS }, () => Array(cols).fill(false));
+}
+
+/* ── MAIN LOOP ──────────────────────────────────── */
+async function runLoop(session) {
+  while (isPlaying && sessionId === session) {
+    updateHighlight();
+    await playStep(currentCol);
+    if (!isPlaying || sessionId !== session) break;
+    currentCol = (currentCol + 1) % cols;
+  }
+}
+
+/* ── RENDER ─────────────────────────────────────── */
+const gridRowsEl = document.getElementById("gridRows");
+const colIndEl   = document.getElementById("colIndicators");
+const ROW_NAMES  = ["S1","S2","S3","S4","S5"];
+
+function renderGrid() {
+  gridRowsEl.innerHTML = "";
+  colIndEl.innerHTML   = "";
+
+  for (let c = 0; c < cols; c++) {
+    const ind = document.createElement("div");
+    ind.className = "col-indicator" + (isPlaying && c === currentCol ? " active-col" : "");
+    colIndEl.appendChild(ind);
+  }
+
+  for (let r = 0; r < ROWS; r++) {
+    const wrap = document.createElement("div");
+    wrap.className = "grid-row-wrapper";
+
+    const lbl = document.createElement("div");
+    lbl.className = "row-label";
+    lbl.textContent = ROW_NAMES[r];
+    wrap.appendChild(lbl);
+
+    const row = document.createElement("div");
+    row.className = "grid-row";
+
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      if (grid[r][c]) cell.classList.add("on");
+      if (isPlaying && c === currentCol) cell.classList.add("playing-col");
+      cell.addEventListener("click", () => toggleCell(r, c));
+      row.appendChild(cell);
+    }
+
+    wrap.appendChild(row);
+    gridRowsEl.appendChild(wrap);
+  }
+}
+
+function updateHighlight() {
+  colIndEl.querySelectorAll(".col-indicator").forEach((el, i) =>
+    el.classList.toggle("active-col", i === currentCol)
+  );
+  gridRowsEl.querySelectorAll(".cell").forEach(el => el.classList.remove("playing-col"));
+  gridRowsEl.querySelectorAll(".grid-row").forEach(rowEl => {
+    const cells = rowEl.querySelectorAll(".cell");
+    if (cells[currentCol]) cells[currentCol].classList.add("playing-col");
+  });
+  document.getElementById("beatCounter").textContent = `${currentCol + 1} / ${cols}`;
+}
+
+/* ── TOGGLE ─────────────────────────────────────── */
+function toggleCell(r, c) {
+  const wasOn = grid[r][c];
+  for (let row = 0; row < ROWS; row++) grid[row][c] = false;
+  if (!wasOn) grid[r][c] = true;
+  renderGrid();
+  if (isPlaying) updateHighlight();
+}
+
+/* ── PLAYBACK CONTROL ───────────────────────────── */
+function startPlayback() {
+  if (isPlaying) return;
+  isPlaying  = true;
+  currentCol = 0;
+  sessionId  = Symbol();
+  runLoop(sessionId);
+}
+
+function stopPlayback() {
+  isPlaying = false;
+  sessionId = null;
+  currentCol = 0;
+  renderGrid();
+  document.getElementById("beatCounter").textContent = "—";
+}
+
+function resetPattern() {
+  grid = makeGrid();
+  renderGrid();
+}
+
+/* ── COLUMN SELECTOR ────────────────────────────── */
+document.querySelectorAll(".col-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const newCols = parseInt(btn.dataset.cols);
+    if (newCols === cols) return;
+    document.querySelectorAll(".col-btn").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+    grid = grid.map(row =>
+      newCols > row.length
+        ? row.concat(Array(newCols - row.length).fill(false))
+        : row.slice(0, newCols)
+    );
+    cols = newCols;
+    if (isPlaying) currentCol = currentCol % cols;
+    renderGrid();
+    if (isPlaying) updateHighlight();
+  });
+});
+
+/* ── WIRING ─────────────────────────────────────── */
+document.getElementById("btnPlay").addEventListener("click",  startPlayback);
+document.getElementById("btnStop").addEventListener("click",  stopPlayback);
+document.getElementById("btnReset").addEventListener("click", resetPattern);
+
+renderGrid();
+</script>
+</body>
+</html>
