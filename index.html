@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sequencer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #1c1c1e;
+    --surface: #252527;
+    --border: #333336;
+    --text: #d4d4d6;
+    --muted: #5a5a5e;
+    --cell-off: #2e2e31;
+    --cell-off-hover: #363639;
+    --cell-on: #a8a8ab;
+    --accent: #6b6b70;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+  }
+
+  .wrapper {
+    width: 100%;
+    max-width: 620px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  h1 {
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .step-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .step-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .step-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+
+  .step-btn.active {
+    border-color: var(--accent);
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  .grid-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .col-indicators {
+    display: flex;
+    gap: 6px;
+    margin-left: 34px;
+    margin-bottom: 10px;
+  }
+
+  .col-indicator {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    transition: background 0.06s;
+  }
+
+  .col-indicator.active-col {
+    background: #c0c0c4;
+  }
+
+  .grid-row-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .grid-row-wrapper:last-child { margin-bottom: 0; }
+
+  .row-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    width: 26px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .grid-row {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .cell {
+    flex: 1;
+    aspect-ratio: 1.4 / 1;
+    background: var(--cell-off);
+    border-radius: 3px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.08s, border-color 0.08s;
+  }
+
+  .cell:hover { background: var(--cell-off-hover); }
+  .cell.on { background: var(--cell-on); }
+  .cell.on:hover { background: #c0c0c4; }
+  .cell.col-playing { border-color: var(--accent); }
+  .cell.on.col-playing { background: #d0d0d4; border-color: transparent; }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .play-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.1s;
+    min-width: 80px;
+  }
+
+  .play-btn:hover { border-color: var(--accent); background: var(--surface); }
+  .play-btn.playing { border-color: var(--accent); }
+
+  .status {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .status.error { color: #9a4a4a; }
+
+  #loading-notice {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 18px;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <h1>Sequencer</h1>
+    <div class="step-toggle">
+      <span class="step-label">steps</span>
+      <button class="step-btn active" data-steps="4">4</button>
+      <button class="step-btn" data-steps="8">8</button>
+    </div>
+  </header>
+
+  <div class="grid-container">
+    <div class="col-indicators" id="col-indicators"></div>
+    <div id="grid"></div>
+  </div>
+
+  <div class="controls">
+    <button class="play-btn" id="play-btn">Play</button>
+    <span class="status" id="status">stopped</span>
+  </div>
+
+  <div id="loading-notice"></div>
+</div>
+
+<script>
+// ─── Config ──────────────────────────────────────────────────────────────────
+const SAMPLE_FILES = ['audio/1_1.wav','audio/1_2.wav','audio/1_3.wav','audio/1_4.wav','audio/1_5.wav'];
+const NUM_ROWS = SAMPLE_FILES.length;
+const SAMPLE_DURATION = 2.0;   // exact duration of every sample in seconds
+const SCHEDULE_AHEAD = 0.1;    // schedule this many seconds ahead of current time
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let numCols = 4;
+let grid = [];        // grid[row][col] → bool
+let currentCol = -1;
+let isPlaying = false;
+
+let audioCtx = null;
+let buffers = {};     // filename → AudioBuffer
+
+// Scheduler state
+let scheduleTimer = null;
+let nextStepTime = 0;   // audioCtx time when next step fires
+let nextStepCol  = 0;   // column index of next step
+let pendingVisual = []; // [{col, time}] queue for rAF visual updates
+
+// ─── DOM refs ────────────────────────────────────────────────────────────────
+const gridEl        = document.getElementById('grid');
+const indicatorsEl  = document.getElementById('col-indicators');
+const playBtn       = document.getElementById('play-btn');
+const statusEl      = document.getElementById('status');
+const loadingNotice = document.getElementById('loading-notice');
+
+// ─── Grid ────────────────────────────────────────────────────────────────────
+function initGrid() {
+  grid = Array.from({length: NUM_ROWS}, () => new Array(numCols).fill(false));
+  renderGrid();
+}
+
+function renderGrid() {
+  // Indicators
+  indicatorsEl.innerHTML = '';
+  for (let c = 0; c < numCols; c++) {
+    const d = document.createElement('div');
+    d.className = 'col-indicator' + (c === currentCol ? ' active-col' : '');
+    d.dataset.col = c;
+    indicatorsEl.appendChild(d);
+  }
+
+  // Rows
+  gridEl.innerHTML = '';
+  for (let r = 0; r < NUM_ROWS; r++) {
+    const wrap = document.createElement('div');
+    wrap.className = 'grid-row-wrapper';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'row-label';
+    lbl.textContent = String(r + 1).padStart(2, '0');
+    wrap.appendChild(lbl);
+
+    const row = document.createElement('div');
+    row.className = 'grid-row';
+    for (let c = 0; c < numCols; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell'
+        + (grid[r][c]      ? ' on'          : '')
+        + (c === currentCol ? ' col-playing' : '');
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.addEventListener('click', onCellClick);
+      row.appendChild(cell);
+    }
+    wrap.appendChild(row);
+    gridEl.appendChild(wrap);
+  }
+}
+
+function setColHighlight(col) {
+  indicatorsEl.querySelectorAll('.col-indicator').forEach((el, i) =>
+    el.classList.toggle('active-col', i === col));
+  gridEl.querySelectorAll('.cell').forEach(el => {
+    const c = parseInt(el.dataset.col);
+    el.classList.toggle('col-playing', c === col);
+  });
+}
+
+function onCellClick(e) {
+  const r = parseInt(e.currentTarget.dataset.row);
+  const c = parseInt(e.currentTarget.dataset.col);
+  if (grid[r][c]) {
+    grid[r][c] = false;
+  } else {
+    for (let row = 0; row < NUM_ROWS; row++) grid[row][c] = false;
+    grid[r][c] = true;
+  }
+  // Re-render just cell states (fast)
+  gridEl.querySelectorAll('.cell').forEach(el => {
+    const er = parseInt(el.dataset.row), ec = parseInt(el.dataset.col);
+    el.classList.toggle('on', grid[er][ec]);
+  });
+}
+
+// ─── Step toggle ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.step-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const n = parseInt(btn.dataset.steps);
+    if (n === numCols) return;
+    numCols = n;
+    document.querySelectorAll('.step-btn').forEach(b =>
+      b.classList.toggle('active', b === btn));
+    grid = Array.from({length: NUM_ROWS}, (_, r) =>
+      Array.from({length: numCols}, (_, c) => grid[r]?.[c] ?? false));
+    currentCol = -1;
+    renderGrid();
+  });
+});
+
+// ─── Audio loading ───────────────────────────────────────────────────────────
+async function loadSamples() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  loadingNotice.textContent = 'Loading samples…';
+  statusEl.textContent = 'loading…';
+
+  const failed = [];
+  await Promise.all(SAMPLE_FILES.map(async file => {
+    try {
+      const res = await fetch(file);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const ab = await res.arrayBuffer();
+      buffers[file] = await audioCtx.decodeAudioData(ab);
+    } catch(e) {
+      failed.push(file);
+      console.warn('Could not load', file, e);
+    }
+  }));
+
+  const loaded = SAMPLE_FILES.length - failed.length;
+
+  if (failed.length === 0) {
+    loadingNotice.textContent = `${loaded} samples loaded. Ready.`;
+    statusEl.textContent = 'ready';
+  } else if (loaded === 0) {
+    loadingNotice.innerHTML =
+      `<span style="color:#9a4a4a">No samples loaded — is this running on a local server?<br>` +
+      `Run <code>start.sh</code> / <code>start.bat</code>, or:<br>` +
+      `<code>python3 -m http.server 8080</code></span>`;
+    statusEl.textContent = 'no audio';
+    statusEl.classList.add('error');
+  } else {
+    loadingNotice.textContent = `${loaded}/${SAMPLE_FILES.length} samples loaded. Missing: ${failed.join(', ')}`;
+    statusEl.textContent = 'partial';
+  }
+}
+
+// ─── Scheduler (Web Audio look-ahead) ────────────────────────────────────────
+//
+// We maintain nextStepTime (audioCtx time) and nextStepCol.
+// Every SCHEDULE_AHEAD/2 ms we look ahead SCHEDULE_AHEAD seconds and
+// schedule any buffers that need to start in that window.
+// A rAF loop fires visual column updates at the right moment.
+
+function scheduleAhead() {
+  const lookaheadUntil = audioCtx.currentTime + SCHEDULE_AHEAD;
+
+  while (nextStepTime < lookaheadUntil) {
+    const col = nextStepCol;
+    const t   = nextStepTime;
+
+    // Schedule audio for each active row in this column
+    for (let r = 0; r < NUM_ROWS; r++) {
+      if (grid[r][col] && buffers[SAMPLE_FILES[r]]) {
+        const src = audioCtx.createBufferSource();
+        src.buffer = buffers[SAMPLE_FILES[r]];
+        src.connect(audioCtx.destination);
+        src.start(t);
+      }
+    }
+
+    // Queue a visual update to fire at time t
+    pendingVisual.push({col, time: t});
+
+    nextStepTime += SAMPLE_DURATION;
+    nextStepCol   = (nextStepCol + 1) % numCols;
+  }
+
+  scheduleTimer = setTimeout(scheduleAhead, (SCHEDULE_AHEAD * 1000) / 2);
+}
+
+function visualLoop() {
+  if (!isPlaying) return;
+  const now = audioCtx.currentTime;
+  while (pendingVisual.length && pendingVisual[0].time <= now) {
+    const {col} = pendingVisual.shift();
+    currentCol = col;
+    setColHighlight(col);
+  }
+  requestAnimationFrame(visualLoop);
+}
+
+// ─── Play / Stop ─────────────────────────────────────────────────────────────
+async function start() {
+  if (!audioCtx) await loadSamples();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+  isPlaying = true;
+  playBtn.textContent = 'Stop';
+  playBtn.classList.add('playing');
+  statusEl.textContent = 'playing';
+  statusEl.classList.remove('error');
+
+  pendingVisual = [];
+  nextStepCol   = 0;
+  nextStepTime  = audioCtx.currentTime + 0.05; // tiny lead-in
+
+  scheduleAhead();
+  requestAnimationFrame(visualLoop);
+}
+
+function stop() {
+  isPlaying = false;
+  clearTimeout(scheduleTimer);
+  scheduleTimer   = null;
+  pendingVisual   = [];
+  currentCol      = -1;
+
+  playBtn.textContent = 'Play';
+  playBtn.classList.remove('playing');
+  statusEl.textContent = 'stopped';
+  setColHighlight(-1);
+}
+
+playBtn.addEventListener('click', () => isPlaying ? stop() : start());
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+initGrid();
+loadSamples();
+</script>
+</body>
+</html>
