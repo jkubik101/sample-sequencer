@@ -27,83 +27,15 @@
     color: var(--text);
     min-height: 100vh;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 40px 24px;
   }
 
-  .app {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
+  .wrapper {
     width: 100%;
-    max-width: 700px;
-  }
-
-  /* ── Set tab strip ── */
-  .set-tabs {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex-shrink: 0;
-    padding-top: 52px; /* align with grid top, below header */
-  }
-
-  .tabs-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    text-align: center;
-  }
-
-  .set-tab {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 7px 0;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.1s;
-    width: 40px;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-  }
-
-  .set-tab:hover {
-    border-color: var(--accent);
-    color: var(--text);
-  }
-
-  .set-tab.active {
-    border-color: var(--accent);
-    color: var(--text);
-    background: var(--surface);
-  }
-
-  .dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--border);
-    flex-shrink: 0;
-    transition: background 0.3s;
-  }
-
-  .set-tab.loaded .dot { background: #5a7a5a; }
-  .set-tab.error  .dot { background: #7a4a4a; }
-
-  /* ── Main ── */
-  .main {
-    flex: 1;
-    min-width: 0;
+    max-width: 620px;
   }
 
   header {
@@ -175,7 +107,9 @@
     transition: background 0.06s;
   }
 
-  .col-indicator.active-col { background: #c0c0c4; }
+  .col-indicator.active-col {
+    background: #c0c0c4;
+  }
 
   .grid-row-wrapper {
     display: flex;
@@ -211,10 +145,10 @@
     transition: background 0.08s, border-color 0.08s;
   }
 
-  .cell:hover          { background: var(--cell-off-hover); }
-  .cell.on             { background: var(--cell-on); }
-  .cell.on:hover       { background: #c0c0c4; }
-  .cell.col-playing    { border-color: var(--accent); }
+  .cell:hover { background: var(--cell-off-hover); }
+  .cell.on { background: var(--cell-on); }
+  .cell.on:hover { background: #c0c0c4; }
+  .cell.col-playing { border-color: var(--accent); }
   .cell.on.col-playing { background: #d0d0d4; border-color: transparent; }
 
   .controls {
@@ -238,7 +172,7 @@
     min-width: 80px;
   }
 
-  .play-btn:hover   { border-color: var(--accent); background: var(--surface); }
+  .play-btn:hover { border-color: var(--accent); background: var(--surface); }
   .play-btn.playing { border-color: var(--accent); }
 
   .status {
@@ -260,126 +194,66 @@
 </style>
 </head>
 <body>
-<div class="app">
-
-  <!-- Left tab strip -->
-  <nav class="set-tabs" id="set-tabs">
-    <div class="tabs-label">set</div>
-    <!-- injected by JS -->
-  </nav>
-
-  <!-- Main panel -->
-  <div class="main">
-    <header>
-      <h1>Sequencer</h1>
-      <div class="step-toggle">
-        <span class="step-label">steps</span>
-        <button class="step-btn active" data-steps="4">4</button>
-        <button class="step-btn" data-steps="8">8</button>
-      </div>
-    </header>
-
-    <div class="grid-container">
-      <div class="col-indicators" id="col-indicators"></div>
-      <div id="grid"></div>
+<div class="wrapper">
+  <header>
+    <h1>Sequencer</h1>
+    <div class="step-toggle">
+      <span class="step-label">steps</span>
+      <button class="step-btn active" data-steps="4">4</button>
+      <button class="step-btn" data-steps="8">8</button>
     </div>
+  </header>
 
-    <div class="controls">
-      <button class="play-btn" id="play-btn">Play</button>
-      <span class="status" id="status">stopped</span>
-    </div>
-
-    <div id="loading-notice"></div>
+  <div class="grid-container">
+    <div class="col-indicators" id="col-indicators"></div>
+    <div id="grid"></div>
   </div>
+
+  <div class="controls">
+    <button class="play-btn" id="play-btn">Play</button>
+    <span class="status" id="status">stopped</span>
+  </div>
+
+  <div id="loading-notice"></div>
 </div>
 
 <script>
-// ─── Config ───────────────────────────────────────────────────────────────────
-const NUM_SETS        = 5;
-const NUM_ROWS        = 5;
-const SAMPLE_DURATION = 2.0;  // seconds — all samples are exactly 2s
-const SCHEDULE_AHEAD  = 0.1;  // look-ahead window in seconds
+// ─── Config ──────────────────────────────────────────────────────────────────
+const SAMPLE_FILES = ['audio/1_1.wav','audio/1_2.wav','audio/1_3.wav','audio/1_4.wav','audio/1_5.wav'];
+const NUM_ROWS = SAMPLE_FILES.length;
+const SAMPLE_DURATION = 2.0;   // exact duration of every sample in seconds
+const SCHEDULE_AHEAD = 0.1;    // schedule this many seconds ahead of current time
 
-// SETS[s] = array of filenames for set s+1
-const SETS = Array.from({length: NUM_SETS}, (_, s) =>
-  Array.from({length: NUM_ROWS}, (_, r) => `${s + 1}_${r + 1}.wav`)
-);
-
-// ─── State ────────────────────────────────────────────────────────────────────
-let activeSet  = 0;
-let numCols    = 4;
-
-// Per-set grids
-let grids = Array.from({length: NUM_SETS}, () =>
-  Array.from({length: NUM_ROWS}, () => new Array(numCols).fill(false))
-);
-
+// ─── State ───────────────────────────────────────────────────────────────────
+let numCols = 4;
+let grid = [];        // grid[row][col] → bool
 let currentCol = -1;
-let isPlaying  = false;
+let isPlaying = false;
 
-// Audio
 let audioCtx = null;
-let buffers  = {};  // 'N_M.wav' → AudioBuffer
+let buffers = {};     // filename → AudioBuffer
 
-// Scheduler
+// Scheduler state
 let scheduleTimer = null;
-let nextStepTime  = 0;
-let nextStepCol   = 0;
-let pendingVisual = [];  // [{col, time}]
+let nextStepTime = 0;   // audioCtx time when next step fires
+let nextStepCol  = 0;   // column index of next step
+let pendingVisual = []; // [{col, time}] queue for rAF visual updates
 
-// ─── DOM refs ─────────────────────────────────────────────────────────────────
-const setTabsEl     = document.getElementById('set-tabs');
+// ─── DOM refs ────────────────────────────────────────────────────────────────
 const gridEl        = document.getElementById('grid');
 const indicatorsEl  = document.getElementById('col-indicators');
 const playBtn       = document.getElementById('play-btn');
 const statusEl      = document.getElementById('status');
 const loadingNotice = document.getElementById('loading-notice');
 
-// ─── Set tabs ─────────────────────────────────────────────────────────────────
-function buildSetTabs() {
-  setTabsEl.querySelectorAll('.set-tab').forEach(el => el.remove());
-  for (let s = 0; s < NUM_SETS; s++) {
-    const btn = document.createElement('button');
-    btn.className = 'set-tab' + (s === activeSet ? ' active' : '');
-    btn.dataset.set = s;
-    btn.innerHTML = `${s + 1}<span class="dot"></span>`;
-    btn.title = `Set ${s + 1}`;
-    btn.addEventListener('click', () => switchSet(s));
-    setTabsEl.appendChild(btn);
-  }
-}
-
-function updateTabDot(s, state) {
-  const tab = setTabsEl.querySelector(`.set-tab[data-set="${s}"]`);
-  if (!tab) return;
-  tab.classList.remove('loaded', 'error');
-  if (state) tab.classList.add(state);
-}
-
-function switchSet(s) {
-  if (s === activeSet) return;
-  if (isPlaying) stop();
-  activeSet  = s;
-  currentCol = -1;
-  setTabsEl.querySelectorAll('.set-tab').forEach((el, i) =>
-    el.classList.toggle('active', i === s));
+// ─── Grid ────────────────────────────────────────────────────────────────────
+function initGrid() {
+  grid = Array.from({length: NUM_ROWS}, () => new Array(numCols).fill(false));
   renderGrid();
-  updateStatus();
-}
-
-// ─── Grid ─────────────────────────────────────────────────────────────────────
-function activeGrid() { return grids[activeSet]; }
-
-function resizeAllGrids(newCols) {
-  grids = grids.map(g =>
-    Array.from({length: NUM_ROWS}, (_, r) =>
-      Array.from({length: newCols}, (_, c) => g[r]?.[c] ?? false))
-  );
 }
 
 function renderGrid() {
-  const g = activeGrid();
-
+  // Indicators
   indicatorsEl.innerHTML = '';
   for (let c = 0; c < numCols; c++) {
     const d = document.createElement('div');
@@ -388,6 +262,7 @@ function renderGrid() {
     indicatorsEl.appendChild(d);
   }
 
+  // Rows
   gridEl.innerHTML = '';
   for (let r = 0; r < NUM_ROWS; r++) {
     const wrap = document.createElement('div');
@@ -403,7 +278,7 @@ function renderGrid() {
     for (let c = 0; c < numCols; c++) {
       const cell = document.createElement('div');
       cell.className = 'cell'
-        + (g[r][c]          ? ' on'          : '')
+        + (grid[r][c]      ? ' on'          : '')
         + (c === currentCol ? ' col-playing' : '');
       cell.dataset.row = r;
       cell.dataset.col = c;
@@ -418,122 +293,107 @@ function renderGrid() {
 function setColHighlight(col) {
   indicatorsEl.querySelectorAll('.col-indicator').forEach((el, i) =>
     el.classList.toggle('active-col', i === col));
-  gridEl.querySelectorAll('.cell').forEach(el =>
-    el.classList.toggle('col-playing', parseInt(el.dataset.col) === col));
+  gridEl.querySelectorAll('.cell').forEach(el => {
+    const c = parseInt(el.dataset.col);
+    el.classList.toggle('col-playing', c === col);
+  });
 }
 
 function onCellClick(e) {
   const r = parseInt(e.currentTarget.dataset.row);
   const c = parseInt(e.currentTarget.dataset.col);
-  const g = activeGrid();
-  if (g[r][c]) {
-    g[r][c] = false;
+  if (grid[r][c]) {
+    grid[r][c] = false;
   } else {
-    for (let row = 0; row < NUM_ROWS; row++) g[row][c] = false;
-    g[r][c] = true;
+    for (let row = 0; row < NUM_ROWS; row++) grid[row][c] = false;
+    grid[r][c] = true;
   }
+  // Re-render just cell states (fast)
   gridEl.querySelectorAll('.cell').forEach(el => {
     const er = parseInt(el.dataset.row), ec = parseInt(el.dataset.col);
-    el.classList.toggle('on', g[er][ec]);
+    el.classList.toggle('on', grid[er][ec]);
   });
 }
 
-// ─── Step toggle ──────────────────────────────────────────────────────────────
+// ─── Step toggle ─────────────────────────────────────────────────────────────
 document.querySelectorAll('.step-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const n = parseInt(btn.dataset.steps);
     if (n === numCols) return;
-    if (isPlaying) stop();
     numCols = n;
     document.querySelectorAll('.step-btn').forEach(b =>
       b.classList.toggle('active', b === btn));
-    resizeAllGrids(n);
+    grid = Array.from({length: NUM_ROWS}, (_, r) =>
+      Array.from({length: numCols}, (_, c) => grid[r]?.[c] ?? false));
     currentCol = -1;
     renderGrid();
   });
 });
 
-// ─── Status ───────────────────────────────────────────────────────────────────
-function updateStatus() {
-  if (isPlaying) return;
-  const files    = SETS[activeSet];
-  const nLoaded  = files.filter(f => buffers[f]).length;
-  if (nLoaded === files.length) {
-    statusEl.textContent = 'ready';
-    statusEl.classList.remove('error');
-  } else if (nLoaded === 0) {
-    statusEl.textContent = 'no audio';
-    statusEl.classList.add('error');
-  } else {
-    statusEl.textContent = 'partial';
-    statusEl.classList.remove('error');
-  }
-}
-
-// ─── Audio loading ────────────────────────────────────────────────────────────
-async function loadAllSamples() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
+// ─── Audio loading ───────────────────────────────────────────────────────────
+async function loadSamples() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   loadingNotice.textContent = 'Loading samples…';
   statusEl.textContent = 'loading…';
-  statusEl.classList.remove('error');
 
-  const allFiles = SETS.flat();
-  let totalLoaded = 0, totalFailed = 0;
-
-  await Promise.all(allFiles.map(async file => {
+  const failed = [];
+  await Promise.all(SAMPLE_FILES.map(async file => {
     try {
       const res = await fetch(file);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const ab = await res.arrayBuffer();
       buffers[file] = await audioCtx.decodeAudioData(ab);
-      totalLoaded++;
     } catch(e) {
-      totalFailed++;
+      failed.push(file);
       console.warn('Could not load', file, e);
     }
   }));
 
-  // Update tab dots
-  for (let s = 0; s < NUM_SETS; s++) {
-    const n = SETS[s].filter(f => buffers[f]).length;
-    updateTabDot(s, n === SETS[s].length ? 'loaded' : n === 0 ? 'error' : 'loaded');
-  }
+  const loaded = SAMPLE_FILES.length - failed.length;
 
-  if (totalFailed === allFiles.length) {
+  if (failed.length === 0) {
+    loadingNotice.textContent = `${loaded} samples loaded. Ready.`;
+    statusEl.textContent = 'ready';
+  } else if (loaded === 0) {
     loadingNotice.innerHTML =
       `<span style="color:#9a4a4a">No samples loaded — is this running on a local server?<br>` +
       `Run <code>start.sh</code> / <code>start.bat</code>, or:<br>` +
       `<code>python3 -m http.server 8080</code></span>`;
-  } else if (totalFailed > 0) {
-    loadingNotice.textContent = `${totalLoaded}/${allFiles.length} samples loaded.`;
+    statusEl.textContent = 'no audio';
+    statusEl.classList.add('error');
   } else {
-    loadingNotice.textContent = `${totalLoaded} samples loaded. Ready.`;
+    loadingNotice.textContent = `${loaded}/${SAMPLE_FILES.length} samples loaded. Missing: ${failed.join(', ')}`;
+    statusEl.textContent = 'partial';
   }
-
-  updateStatus();
 }
 
 // ─── Scheduler (Web Audio look-ahead) ────────────────────────────────────────
-function scheduleAhead() {
-  const until = audioCtx.currentTime + SCHEDULE_AHEAD;
-  const files  = SETS[activeSet];
-  const g      = activeGrid();
+//
+// We maintain nextStepTime (audioCtx time) and nextStepCol.
+// Every SCHEDULE_AHEAD/2 ms we look ahead SCHEDULE_AHEAD seconds and
+// schedule any buffers that need to start in that window.
+// A rAF loop fires visual column updates at the right moment.
 
-  while (nextStepTime < until) {
+function scheduleAhead() {
+  const lookaheadUntil = audioCtx.currentTime + SCHEDULE_AHEAD;
+
+  while (nextStepTime < lookaheadUntil) {
     const col = nextStepCol;
     const t   = nextStepTime;
 
+    // Schedule audio for each active row in this column
     for (let r = 0; r < NUM_ROWS; r++) {
-      if (g[r][col] && buffers[files[r]]) {
+      if (grid[r][col] && buffers[SAMPLE_FILES[r]]) {
         const src = audioCtx.createBufferSource();
-        src.buffer = buffers[files[r]];
+        src.buffer = buffers[SAMPLE_FILES[r]];
         src.connect(audioCtx.destination);
         src.start(t);
       }
     }
 
+    // Queue a visual update to fire at time t
     pendingVisual.push({col, time: t});
+
     nextStepTime += SAMPLE_DURATION;
     nextStepCol   = (nextStepCol + 1) % numCols;
   }
@@ -545,15 +405,16 @@ function visualLoop() {
   if (!isPlaying) return;
   const now = audioCtx.currentTime;
   while (pendingVisual.length && pendingVisual[0].time <= now) {
-    currentCol = pendingVisual.shift().col;
-    setColHighlight(currentCol);
+    const {col} = pendingVisual.shift();
+    currentCol = col;
+    setColHighlight(col);
   }
   requestAnimationFrame(visualLoop);
 }
 
-// ─── Play / Stop ──────────────────────────────────────────────────────────────
+// ─── Play / Stop ─────────────────────────────────────────────────────────────
 async function start() {
-  if (!audioCtx) await loadAllSamples();
+  if (!audioCtx) await loadSamples();
   if (audioCtx.state === 'suspended') await audioCtx.resume();
 
   isPlaying = true;
@@ -564,7 +425,7 @@ async function start() {
 
   pendingVisual = [];
   nextStepCol   = 0;
-  nextStepTime  = audioCtx.currentTime + 0.05;
+  nextStepTime  = audioCtx.currentTime + 0.05; // tiny lead-in
 
   scheduleAhead();
   requestAnimationFrame(visualLoop);
@@ -573,22 +434,21 @@ async function start() {
 function stop() {
   isPlaying = false;
   clearTimeout(scheduleTimer);
-  scheduleTimer = null;
-  pendingVisual = [];
-  currentCol    = -1;
+  scheduleTimer   = null;
+  pendingVisual   = [];
+  currentCol      = -1;
 
   playBtn.textContent = 'Play';
   playBtn.classList.remove('playing');
+  statusEl.textContent = 'stopped';
   setColHighlight(-1);
-  updateStatus();
 }
 
 playBtn.addEventListener('click', () => isPlaying ? stop() : start());
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
-buildSetTabs();
-renderGrid();
-loadAllSamples();
+// ─── Init ────────────────────────────────────────────────────────────────────
+initGrid();
+loadSamples();
 </script>
 </body>
 </html>
