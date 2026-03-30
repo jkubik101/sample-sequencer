@@ -300,9 +300,11 @@ const NUM_ROWS        = 5;
 const SAMPLE_DURATION = 2.0;  // seconds — all samples are exactly 2s
 const SCHEDULE_AHEAD  = 0.1;  // look-ahead window in seconds
 
+const AUDIO_PATH = 'audio/'; // folder where .wav files live (trailing slash, or '' for same dir)
+
 // SETS[s] = array of filenames for set s+1
 const SETS = Array.from({length: NUM_SETS}, (_, s) =>
-  Array.from({length: NUM_ROWS}, (_, r) => `${s + 1}_${r + 1}.wav`)
+  Array.from({length: NUM_ROWS}, (_, r) => `${AUDIO_PATH}${s + 1}_${r + 1}.wav`)
 );
 
 // ─── State ────────────────────────────────────────────────────────────────────
