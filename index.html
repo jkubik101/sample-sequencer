@@ -350,7 +350,7 @@ async function loadSamples() {
   statusEl.textContent = 'loading…';
 
   const failed = [];
-  await Promise.all(SAMPLE_FILES.map(async file => {
+  await Promise.all(SETS.map(async file => {
     try {
       const res = await fetch(file);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -362,7 +362,7 @@ async function loadSamples() {
     }
   }));
 
-  const loaded = SAMPLE_FILES.length - failed.length;
+  const loaded = SETS.length - failed.length;
 
   if (failed.length === 0) {
     loadingNotice.textContent = `${loaded} samples loaded. Ready.`;
@@ -375,7 +375,7 @@ async function loadSamples() {
     statusEl.textContent = 'no audio';
     statusEl.classList.add('error');
   } else {
-    loadingNotice.textContent = `${loaded}/${SAMPLE_FILES.length} samples loaded. Missing: ${failed.join(', ')}`;
+    loadingNotice.textContent = `${loaded}/${SETS.length} samples loaded. Missing: ${failed.join(', ')}`;
     statusEl.textContent = 'partial';
   }
 }
@@ -396,9 +396,9 @@ function scheduleAhead() {
 
     // Schedule audio for each active row in this column
     for (let r = 0; r < NUM_ROWS; r++) {
-      if (grid[r][col] && buffers[SAMPLE_FILES[r]]) {
+      if (grid[r][col] && buffers[SETS[r]]) {
         const src = audioCtx.createBufferSource();
-        src.buffer = buffers[SAMPLE_FILES[r]];
+        src.buffer = buffers[SETS[r]];
         src.connect(audioCtx.destination);
         src.start(t);
       }
