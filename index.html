@@ -257,6 +257,77 @@
     margin-top: 18px;
     line-height: 1.8;
   }
+
+  /* ── Log panel ── */
+  .log-section { margin-top: 20px; }
+
+  .log-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .log-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex: 1;
+  }
+
+  .log-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.1s;
+    white-space: nowrap;
+  }
+
+  .log-btn:hover  { border-color: var(--accent); color: var(--text); }
+  .log-btn.active { border-color: var(--accent); color: var(--text); background: var(--surface); }
+
+  .log-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    max-height: 180px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .log-panel::-webkit-scrollbar       { width: 4px; }
+  .log-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .log-panel.hidden { display: none; }
+
+  .log-empty {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .log-entry {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    line-height: 1.9;
+    display: flex;
+    gap: 10px;
+  }
+
+  .le-elapsed { color: var(--muted); flex-shrink: 0; min-width: 54px; }
+  .le-ts      { color: var(--muted); flex-shrink: 0; }
+  .le-file    { color: var(--text); }
+  .le-silent  { color: var(--muted); font-style: italic; }
 </style>
 </head>
 <body>
@@ -290,6 +361,19 @@
     </div>
 
     <div id="loading-notice"></div>
+
+    <!-- Log panel -->
+    <div class="log-section">
+      <div class="log-toolbar">
+        <span class="log-title">Log</span>
+        <button class="log-btn active" id="log-toggle-btn">Hide</button>
+        <button class="log-btn" id="log-download-btn">Download</button>
+      </div>
+      <div class="log-panel" id="log-panel">
+        <span class="log-empty">No entries yet — press Play to start logging.</span>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -516,6 +600,74 @@ async function loadAllSamples() {
   updateStatus();
 }
 
+// ─── Logging ──────────────────────────────────────────────────────────────────
+let logEntries   = [];   // [{elapsed, timestamp, files}]
+let logVisible   = true;
+let playStartTs  = null; // wall-clock Date when play started
+let playStartCtx = null; // audioCtx.currentTime when play started
+
+const logPanel       = document.getElementById('log-panel');
+const logToggleBtn   = document.getElementById('log-toggle-btn');
+const logDownloadBtn = document.getElementById('log-download-btn');
+
+function appendLogRow(elapsed, ts, files) {
+  // Remove empty placeholder if present
+  const empty = logPanel.querySelector('.log-empty');
+  if (empty) empty.remove();
+
+  const row = document.createElement('div');
+  row.className = 'log-entry';
+  row.innerHTML =
+    `<span class="le-elapsed">${elapsed}</span>` +
+    `<span class="le-ts">${ts}</span>` +
+    (files.length
+      ? `<span class="le-file">${files.map(f => f.replace(AUDIO_PATH, '')).join(', ')}</span>`
+      : `<span class="le-silent">—</span>`);
+  logPanel.appendChild(row);
+  logPanel.scrollTop = logPanel.scrollHeight;
+}
+
+function rebuildLogPanel() {
+  logPanel.innerHTML = '';
+  if (logEntries.length === 0) {
+    logPanel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
+    return;
+  }
+  logEntries.forEach(({elapsed, ts, files}) => appendLogRow(elapsed, ts, files));
+}
+
+function resetLog() {
+  logEntries   = [];
+  playStartTs  = null;
+  playStartCtx = null;
+  logPanel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
+}
+
+function downloadLog() {
+  if (logEntries.length === 0) return;
+  const lines = ['elapsed,timestamp,files'];
+  logEntries.forEach(({elapsed, ts, files}) =>
+    lines.push(`${elapsed},${ts},"${files.map(f => f.replace(AUDIO_PATH, '')).join('; ')}"`)
+  );
+  const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `sequencer-log-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+logToggleBtn.addEventListener('click', () => {
+  logVisible = !logVisible;
+  logPanel.classList.toggle('hidden', !logVisible);
+  logToggleBtn.textContent = logVisible ? 'Hide' : 'Show';
+  logToggleBtn.classList.toggle('active', logVisible);
+  if (logVisible) rebuildLogPanel();
+});
+
+logDownloadBtn.addEventListener('click', downloadLog);
+
 // ─── Scheduler (Web Audio look-ahead) ────────────────────────────────────────
 function scheduleAhead() {
   const until = audioCtx.currentTime + SCHEDULE_AHEAD;
@@ -535,7 +687,13 @@ function scheduleAhead() {
       }
     }
 
-    pendingVisual.push({col, time: t});
+    pendingVisual.push({col, time: t, logFiles: (() => {
+      const active = [];
+      for (let r = 0; r < NUM_ROWS; r++) {
+        if (g[r][col] && buffers[files[r]]) active.push(files[r]);
+      }
+      return active;
+    })()});
     nextStepTime += SAMPLE_DURATION;
     nextStepCol   = (nextStepCol + 1) % numCols;
   }
@@ -547,8 +705,19 @@ function visualLoop() {
   if (!isPlaying) return;
   const now = audioCtx.currentTime;
   while (pendingVisual.length && pendingVisual[0].time <= now) {
-    currentCol = pendingVisual.shift().col;
+    const entry = pendingVisual.shift();
+    currentCol = entry.col;
     setColHighlight(currentCol);
+    // Log: elapsed relative to audioCtx start time
+    const elapsedSec = entry.time - playStartCtx;
+    const mm  = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+    const ss  = String(Math.floor(elapsedSec % 60)).padStart(2, '0');
+    const ms  = String(Math.floor((elapsedSec % 1) * 1000)).padStart(3, '0');
+    const elapsed = `${mm}:${ss}.${ms}`;
+    const wallMs  = playStartTs.getTime() + elapsedSec * 1000;
+    const ts      = new Date(wallMs).toTimeString().slice(0, 8);
+    logEntries.push({elapsed, ts, files: entry.logFiles});
+    if (logVisible) appendLogRow(elapsed, ts, entry.logFiles);
   }
   requestAnimationFrame(visualLoop);
 }
@@ -568,6 +737,9 @@ async function start() {
   nextStepCol   = 0;
   nextStepTime  = audioCtx.currentTime + 0.05;
 
+  playStartCtx = nextStepTime;
+  playStartTs  = new Date(Date.now() + 0.05 * 1000);
+
   scheduleAhead();
   requestAnimationFrame(visualLoop);
 }
@@ -583,6 +755,7 @@ function stop() {
   playBtn.classList.remove('playing');
   setColHighlight(-1);
   updateStatus();
+  resetLog();
 }
 
 playBtn.addEventListener('click', () => isPlaying ? stop() : start());
