@@ -326,6 +326,7 @@
 
   .le-elapsed { color: var(--muted); flex-shrink: 0; min-width: 54px; }
   .le-ts      { color: var(--muted); flex-shrink: 0; }
+  .le-col     { color: var(--muted); flex-shrink: 0; min-width: 44px; }
   .le-file    { color: var(--text); }
   .le-silent  { color: var(--muted); font-style: italic; }
 </style>
@@ -601,16 +602,17 @@ async function loadAllSamples() {
 }
 
 // ─── Logging ──────────────────────────────────────────────────────────────────
-let logEntries   = [];   // [{elapsed, timestamp, files}]
-let logVisible   = true;
-let playStartTs  = null; // wall-clock Date when play started
-let playStartCtx = null; // audioCtx.currentTime when play started
+let logEntries     = [];   // [{elapsed, ts, col, files}] — current session
+let prevLogEntries = [];   // saved after stop, available for download
+let logVisible     = true;
+let playStartTs    = null;
+let playStartCtx   = null;
 
 const logPanel       = document.getElementById('log-panel');
 const logToggleBtn   = document.getElementById('log-toggle-btn');
 const logDownloadBtn = document.getElementById('log-download-btn');
 
-function appendLogRow(elapsed, ts, files) {
+function appendLogRow(elapsed, ts, col, files) {
   // Remove empty placeholder if present
   const empty = logPanel.querySelector('.log-empty');
   if (empty) empty.remove();
@@ -620,6 +622,7 @@ function appendLogRow(elapsed, ts, files) {
   row.innerHTML =
     `<span class="le-elapsed">${elapsed}</span>` +
     `<span class="le-ts">${ts}</span>` +
+    `<span class="le-col">col ${String(col + 1).padStart(2, '0')}</span>` +
     (files.length
       ? `<span class="le-file">${files.map(f => f.replace(AUDIO_PATH, '')).join(', ')}</span>`
       : `<span class="le-silent">—</span>`);
@@ -633,21 +636,25 @@ function rebuildLogPanel() {
     logPanel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
     return;
   }
-  logEntries.forEach(({elapsed, ts, files}) => appendLogRow(elapsed, ts, files));
+  logEntries.forEach(({elapsed, ts, col, files}) => appendLogRow(elapsed, ts, col, files));
 }
 
 function resetLog() {
+  prevLogEntries = logEntries.length ? [...logEntries] : prevLogEntries;
   logEntries   = [];
   playStartTs  = null;
   playStartCtx = null;
+  // Update download button: show previous log option if available
+  logDownloadBtn.textContent = prevLogEntries.length ? 'Download prev' : 'Download';
+  logDownloadBtn.classList.toggle('active', prevLogEntries.length > 0);
   logPanel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
 }
 
-function downloadLog() {
-  if (logEntries.length === 0) return;
-  const lines = ['elapsed,timestamp,files'];
-  logEntries.forEach(({elapsed, ts, files}) =>
-    lines.push(`${elapsed},${ts},"${files.map(f => f.replace(AUDIO_PATH, '')).join('; ')}"`)
+function downloadLog(entries) {
+  if (!entries || entries.length === 0) return;
+  const lines = ['elapsed,timestamp,col,files'];
+  entries.forEach(({elapsed, ts, col, files}) =>
+    lines.push(`${elapsed},${ts},${col + 1},"${files.map(f => f.replace(AUDIO_PATH, '')).join('; ')}"`)
   );
   const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
   const url  = URL.createObjectURL(blob);
@@ -666,7 +673,8 @@ logToggleBtn.addEventListener('click', () => {
   if (logVisible) rebuildLogPanel();
 });
 
-logDownloadBtn.addEventListener('click', downloadLog);
+logDownloadBtn.addEventListener('click', () =>
+  downloadLog(logEntries.length ? logEntries : prevLogEntries));
 
 // ─── Scheduler (Web Audio look-ahead) ────────────────────────────────────────
 function scheduleAhead() {
@@ -716,8 +724,8 @@ function visualLoop() {
     const elapsed = `${mm}:${ss}.${ms}`;
     const wallMs  = playStartTs.getTime() + elapsedSec * 1000;
     const ts      = new Date(wallMs).toTimeString().slice(0, 8);
-    logEntries.push({elapsed, ts, files: entry.logFiles});
-    if (logVisible) appendLogRow(elapsed, ts, entry.logFiles);
+    logEntries.push({elapsed, ts, col: entry.col, files: entry.logFiles});
+    if (logVisible) appendLogRow(elapsed, ts, entry.col, entry.logFiles);
   }
   requestAnimationFrame(visualLoop);
 }
@@ -739,6 +747,9 @@ async function start() {
 
   playStartCtx = nextStepTime;
   playStartTs  = new Date(Date.now() + 0.05 * 1000);
+
+  logDownloadBtn.textContent = 'Download';
+  logDownloadBtn.classList.remove('active');
 
   scheduleAhead();
   requestAnimationFrame(visualLoop);
