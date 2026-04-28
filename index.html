@@ -65,16 +65,16 @@
     background: none;
     border: 1px solid var(--border);
     color: var(--muted);
-    padding: 7px 0;
+    padding: 6px 0 4px;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.1s;
+    transition: border-color 0.1s, color 0.1s, background 0.1s;
     width: 40px;
     text-align: center;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 3px;
+    gap: 4px;
   }
 
   .set-tab:hover {
@@ -82,12 +82,49 @@
     color: var(--text);
   }
 
-  .set-tab.active {
+  /* viewed tab — brighter border */
+  .set-tab.viewed {
     border-color: var(--accent);
     color: var(--text);
     background: var(--surface);
   }
 
+  /* playing tab — solid left bar */
+  .set-tab.playing-tab {
+    border-left: 2px solid #c0c0c4;
+  }
+
+  /* queued tab — dashed indicator */
+  .set-tab.queued-tab {
+    border-style: dashed;
+    border-color: var(--accent);
+  }
+
+  .tab-num {
+    line-height: 1;
+  }
+
+  /* bar-progress dots row */
+  .tab-dots {
+    display: flex;
+    gap: 2px;
+    height: 4px;
+    align-items: center;
+  }
+
+  .tab-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.05s;
+    flex-shrink: 0;
+  }
+
+  .tab-dot.beat-on   { background: #c0c0c4; }
+  .tab-dot.beat-past { background: var(--muted); }
+
+  /* load-state dot */
   .dot {
     width: 4px;
     height: 4px;
@@ -257,6 +294,78 @@
     margin-top: 18px;
     line-height: 1.8;
   }
+
+  /* ── Log panel ── */
+  .log-section { margin-top: 20px; }
+
+  .log-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .log-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex: 1;
+  }
+
+  .log-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.1s;
+    white-space: nowrap;
+  }
+
+  .log-btn:hover  { border-color: var(--accent); color: var(--text); }
+  .log-btn.active { border-color: var(--accent); color: var(--text); background: var(--surface); }
+
+  .log-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    max-height: 180px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .log-panel::-webkit-scrollbar       { width: 4px; }
+  .log-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .log-panel.hidden { display: none; }
+
+  .log-empty {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .log-entry {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    line-height: 1.9;
+    display: flex;
+    gap: 10px;
+  }
+
+  .le-elapsed { color: var(--muted); flex-shrink: 0; min-width: 54px; }
+  .le-ts      { color: var(--muted); flex-shrink: 0; }
+  .le-col     { color: var(--muted); flex-shrink: 0; min-width: 44px; }
+  .le-file    { color: var(--text); }
+  .le-silent  { color: var(--muted); font-style: italic; }
 </style>
 </head>
 <body>
@@ -286,10 +395,24 @@
 
     <div class="controls">
       <button class="play-btn" id="play-btn">Play</button>
+      <button class="play-btn" id="randomize-btn">Randomize order</button>
       <span class="status" id="status">stopped</span>
     </div>
 
     <div id="loading-notice"></div>
+
+    <!-- Log panel -->
+    <div class="log-section">
+      <div class="log-toolbar">
+        <span class="log-title">Log</span>
+        <button class="log-btn active" id="log-toggle-btn">Hide</button>
+        <button class="log-btn" id="log-download-btn">Download</button>
+      </div>
+      <div class="log-panel" id="log-panel">
+        <span class="log-empty">No entries yet — press Play to start logging.</span>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -308,8 +431,15 @@ const SETS = Array.from({length: NUM_SETS}, (_, s) =>
 );
 
 // ─── State ────────────────────────────────────────────────────────────────────
-let activeSet  = 0;
+let viewedSet  = 0;   // which tab is shown in the grid editor
+let playingSet = 0;   // which set is currently sounding
+let queuedSet  = null; // set to switch to after current bar, null = follow setPlayOrder
 let numCols    = 4;
+
+// Shuffled playback order — reshuffled each time Play is pressed
+// e.g. [2, 0, 4, 1, 3] means play set 3, 1, 5, 2, 4 in that order
+let setPlayOrder = Array.from({length: NUM_SETS}, (_, i) => i);
+let setPlayIndex = 0; // current position within setPlayOrder (advances per full loop of columns)
 
 // Per-set grids
 let grids = Array.from({length: NUM_SETS}, () =>
@@ -342,13 +472,33 @@ function buildSetTabs() {
   setTabsEl.querySelectorAll('.set-tab').forEach(el => el.remove());
   for (let s = 0; s < NUM_SETS; s++) {
     const btn = document.createElement('button');
-    btn.className = 'set-tab' + (s === activeSet ? ' active' : '');
+    btn.className = 'set-tab';
     btn.dataset.set = s;
-    btn.innerHTML = `${s + 1}<span class="dot"></span>`;
+    btn.innerHTML =
+      `<span class="tab-num">${s + 1}</span>` +
+      `<div class="tab-dots">${'<span class="tab-dot"></span>'.repeat(numCols)}</div>` +
+      `<span class="dot"></span>`;
     btn.title = `Set ${s + 1}`;
-    btn.addEventListener('click', () => switchSet(s));
+    btn.addEventListener('click', () => switchViewedSet(s));
     setTabsEl.appendChild(btn);
   }
+  refreshTabClasses();
+}
+
+function refreshTabDots() {
+  // Rebuild dot count if numCols changed
+  setTabsEl.querySelectorAll('.set-tab').forEach(tab => {
+    const dotsEl = tab.querySelector('.tab-dots');
+    if (dotsEl) dotsEl.innerHTML = '<span class="tab-dot"></span>'.repeat(numCols);
+  });
+}
+
+function refreshTabClasses() {
+  setTabsEl.querySelectorAll('.set-tab').forEach((tab, i) => {
+    tab.classList.toggle('viewed',      i === viewedSet);
+    tab.classList.toggle('playing-tab', i === playingSet && isPlaying);
+    tab.classList.toggle('queued-tab',  i === queuedSet);
+  });
 }
 
 function updateTabDot(s, state) {
@@ -358,19 +508,32 @@ function updateTabDot(s, state) {
   if (state) tab.classList.add(state);
 }
 
-function switchSet(s) {
-  if (s === activeSet) return;
-  if (isPlaying) stop();
-  activeSet  = s;
-  currentCol = -1;
-  setTabsEl.querySelectorAll('.set-tab').forEach((el, i) =>
-    el.classList.toggle('active', i === s));
+// Update bar-progress dots on the playing tab
+function updateBarDots(playingS, col) {
+  setTabsEl.querySelectorAll('.set-tab').forEach((tab, i) => {
+    const dots = tab.querySelectorAll('.tab-dot');
+    dots.forEach((d, di) => {
+      d.classList.remove('beat-on', 'beat-past');
+      if (i === playingS) {
+        if (di === col)   d.classList.add('beat-on');
+        else if (di < col) d.classList.add('beat-past');
+      }
+    });
+  });
+}
+
+// Switch which set's grid is shown — queues it to play after current bar
+function switchViewedSet(s) {
+  viewedSet = s;
+  if (isPlaying && s !== playingSet) {
+    queuedSet = s;
+  }
+  refreshTabClasses();
   renderGrid();
-  updateStatus();
 }
 
 // ─── Grid ─────────────────────────────────────────────────────────────────────
-function activeGrid() { return grids[activeSet]; }
+function activeGrid() { return grids[viewedSet]; }
 
 function resizeAllGrids(newCols) {
   grids = grids.map(g =>
@@ -405,8 +568,8 @@ function renderGrid() {
     for (let c = 0; c < numCols; c++) {
       const cell = document.createElement('div');
       cell.className = 'cell'
-        + (g[r][c]          ? ' on'          : '')
-        + (c === currentCol ? ' col-playing' : '');
+        + (g[r][c]                                          ? ' on'          : '')
+        + (c === currentCol && viewedSet === playingSet     ? ' col-playing' : '');
       cell.dataset.row = r;
       cell.dataset.col = c;
       cell.addEventListener('click', onCellClick);
@@ -419,9 +582,9 @@ function renderGrid() {
 
 function setColHighlight(col) {
   indicatorsEl.querySelectorAll('.col-indicator').forEach((el, i) =>
-    el.classList.toggle('active-col', i === col));
+    el.classList.toggle('active-col', i === col && viewedSet === playingSet));
   gridEl.querySelectorAll('.cell').forEach(el =>
-    el.classList.toggle('col-playing', parseInt(el.dataset.col) === col));
+    el.classList.toggle('col-playing', parseInt(el.dataset.col) === col && viewedSet === playingSet));
 }
 
 function onCellClick(e) {
@@ -451,6 +614,7 @@ document.querySelectorAll('.step-btn').forEach(btn => {
       b.classList.toggle('active', b === btn));
     resizeAllGrids(n);
     currentCol = -1;
+    refreshTabDots();
     renderGrid();
   });
 });
@@ -458,7 +622,7 @@ document.querySelectorAll('.step-btn').forEach(btn => {
 // ─── Status ───────────────────────────────────────────────────────────────────
 function updateStatus() {
   if (isPlaying) return;
-  const files    = SETS[activeSet];
+  const files    = SETS[viewedSet];
   const nLoaded  = files.filter(f => buffers[f]).length;
   if (nLoaded === files.length) {
     statusEl.textContent = 'ready';
@@ -516,15 +680,100 @@ async function loadAllSamples() {
   updateStatus();
 }
 
+// ─── Logging ──────────────────────────────────────────────────────────────────
+let logEntries     = [];   // [{elapsed, ts, col, files}] — current session
+let prevLogEntries = [];   // saved after stop, available for download
+let logVisible     = true;
+let playStartTs    = null;
+let playStartCtx   = null;
+
+const logPanel       = document.getElementById('log-panel');
+const logToggleBtn   = document.getElementById('log-toggle-btn');
+const logDownloadBtn = document.getElementById('log-download-btn');
+
+function appendLogRow(elapsed, ts, set, col, files) {
+  const empty = logPanel.querySelector('.log-empty');
+  if (empty) empty.remove();
+
+  const row = document.createElement('div');
+  row.className = 'log-entry';
+  row.innerHTML =
+    `<span class="le-elapsed">${elapsed}</span>` +
+    `<span class="le-ts">${ts}</span>` +
+    `<span class="le-col">s${set} c${String(col + 1).padStart(2, '0')}</span>` +
+    (files.length
+      ? `<span class="le-file">${files.map(f => f.replace(AUDIO_PATH, '')).join(', ')}</span>`
+      : `<span class="le-silent">—</span>`);
+  logPanel.appendChild(row);
+  logPanel.scrollTop = logPanel.scrollHeight;
+}
+
+function rebuildLogPanel() {
+  logPanel.innerHTML = '';
+  if (logEntries.length === 0) {
+    logPanel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
+    return;
+  }
+  logEntries.forEach(({elapsed, ts, set, col, files}) => appendLogRow(elapsed, ts, set, col, files));
+}
+
+function resetLog() {
+  prevLogEntries = logEntries.length ? [...logEntries] : prevLogEntries;
+  logEntries   = [];
+  playStartTs  = null;
+  playStartCtx = null;
+  // Update download button: show previous log option if available
+  logDownloadBtn.textContent = prevLogEntries.length ? 'Download prev' : 'Download';
+  logDownloadBtn.classList.toggle('active', prevLogEntries.length > 0);
+  logPanel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
+}
+
+function downloadLog(entries) {
+  if (!entries || entries.length === 0) return;
+  const lines = ['elapsed,timestamp,set,col,files'];
+  entries.forEach(({elapsed, ts, set, col, files}) =>
+    lines.push(`${elapsed},${ts},${set},${col + 1},"${files.map(f => f.replace(AUDIO_PATH, '')).join('; ')}"`)
+  );
+  const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `sequencer-log-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+logToggleBtn.addEventListener('click', () => {
+  logVisible = !logVisible;
+  logPanel.classList.toggle('hidden', !logVisible);
+  logToggleBtn.textContent = logVisible ? 'Hide' : 'Show';
+  logToggleBtn.classList.toggle('active', logVisible);
+  if (logVisible) rebuildLogPanel();
+});
+
+logDownloadBtn.addEventListener('click', () =>
+  downloadLog(logEntries.length ? logEntries : prevLogEntries));
+
+// ─── Shuffle ──────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  // Fisher-Yates in-place
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 // ─── Scheduler (Web Audio look-ahead) ────────────────────────────────────────
 function scheduleAhead() {
   const until = audioCtx.currentTime + SCHEDULE_AHEAD;
-  const files  = SETS[activeSet];
-  const g      = activeGrid();
 
   while (nextStepTime < until) {
-    const col = nextStepCol;
-    const t   = nextStepTime;
+    const col           = nextStepCol;
+    const t             = nextStepTime;
+    const scheduledSet  = setPlayOrder[setPlayIndex];
+    const files         = SETS[scheduledSet];
+    const g             = grids[scheduledSet];
 
     for (let r = 0; r < NUM_ROWS; r++) {
       if (g[r][col] && buffers[files[r]]) {
@@ -535,9 +784,25 @@ function scheduleAhead() {
       }
     }
 
-    pendingVisual.push({col, time: t});
+    const logFiles = [];
+    for (let r = 0; r < NUM_ROWS; r++) {
+      if (g[r][col] && buffers[files[r]]) logFiles.push(files[r]);
+    }
+
+    pendingVisual.push({col, time: t, logFiles, scheduledSet});
     nextStepTime += SAMPLE_DURATION;
     nextStepCol   = (nextStepCol + 1) % numCols;
+
+    // After the last column of a bar, advance to next set
+    if (nextStepCol === 0) {
+      if (queuedSet !== null) {
+        // honour the manual queue
+        setPlayOrder[setPlayIndex] = queuedSet;
+        queuedSet = null;
+      } else {
+        setPlayIndex = (setPlayIndex + 1) % setPlayOrder.length;
+      }
+    }
   }
 
   scheduleTimer = setTimeout(scheduleAhead, (SCHEDULE_AHEAD * 1000) / 2);
@@ -547,8 +812,30 @@ function visualLoop() {
   if (!isPlaying) return;
   const now = audioCtx.currentTime;
   while (pendingVisual.length && pendingVisual[0].time <= now) {
-    currentCol = pendingVisual.shift().col;
+    const entry = pendingVisual.shift();
+    currentCol = entry.col;
+
+    // Update playingSet and refresh tabs if it changed
+    if (entry.scheduledSet !== playingSet) {
+      playingSet = entry.scheduledSet;
+      refreshTabClasses();
+      // If we're viewing the playing set, re-render grid to show col highlight
+      if (viewedSet === playingSet) renderGrid();
+    }
+
     setColHighlight(currentCol);
+    updateBarDots(playingSet, currentCol);
+
+    // Log
+    const elapsedSec = entry.time - playStartCtx;
+    const mm  = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+    const ss  = String(Math.floor(elapsedSec % 60)).padStart(2, '0');
+    const ms  = String(Math.floor((elapsedSec % 1) * 1000)).padStart(3, '0');
+    const elapsed = `${mm}:${ss}.${ms}`;
+    const wallMs  = playStartTs.getTime() + elapsedSec * 1000;
+    const ts      = new Date(wallMs).toTimeString().slice(0, 8);
+    logEntries.push({elapsed, ts, set: entry.scheduledSet + 1, col: entry.col, files: entry.logFiles});
+    if (logVisible) appendLogRow(elapsed, ts, entry.scheduledSet + 1, entry.col, entry.logFiles);
   }
   requestAnimationFrame(visualLoop);
 }
@@ -568,6 +855,18 @@ async function start() {
   nextStepCol   = 0;
   nextStepTime  = audioCtx.currentTime + 0.05;
 
+  playingSet = setPlayOrder[0];
+  viewedSet  = playingSet;
+  queuedSet  = null;
+  setPlayIndex = 0;
+  refreshTabClasses();
+
+  playStartCtx = nextStepTime;
+  playStartTs  = new Date(Date.now() + 0.05 * 1000);
+
+  logDownloadBtn.textContent = 'Download';
+  logDownloadBtn.classList.remove('active');
+
   scheduleAhead();
   requestAnimationFrame(visualLoop);
 }
@@ -582,10 +881,19 @@ function stop() {
   playBtn.textContent = 'Play';
   playBtn.classList.remove('playing');
   setColHighlight(-1);
+  updateBarDots(-1, -1);
+  queuedSet = null;
+  refreshTabClasses();
   updateStatus();
+  resetLog();
 }
 
 playBtn.addEventListener('click', () => isPlaying ? stop() : start());
+
+document.getElementById('randomize-btn').addEventListener('click', () => {
+  shuffle(setPlayOrder);
+  setPlayIndex = 0;
+});
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 buildSetTabs();
