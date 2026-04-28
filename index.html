@@ -396,6 +396,11 @@ const SETS = Array.from({length: NUM_SETS}, (_, s) =>
 let activeSet  = 0;
 let numCols    = 4;
 
+// Shuffled playback order — reshuffled each time Play is pressed
+// e.g. [2, 0, 4, 1, 3] means play set 3, 1, 5, 2, 4 in that order
+let setPlayOrder = Array.from({length: NUM_SETS}, (_, i) => i);
+let setPlayIndex = 0; // current position within setPlayOrder (advances per full loop of columns)
+
 // Per-set grids
 let grids = Array.from({length: NUM_SETS}, () =>
   Array.from({length: NUM_ROWS}, () => new Array(numCols).fill(false))
@@ -445,13 +450,12 @@ function updateTabDot(s, state) {
 
 function switchSet(s) {
   if (s === activeSet) return;
-  if (isPlaying) stop();
   activeSet  = s;
-  currentCol = -1;
+  currentCol = isPlaying ? currentCol : -1;
   setTabsEl.querySelectorAll('.set-tab').forEach((el, i) =>
     el.classList.toggle('active', i === s));
   renderGrid();
-  updateStatus();
+  if (!isPlaying) updateStatus();
 }
 
 // ─── Grid ─────────────────────────────────────────────────────────────────────
@@ -612,8 +616,7 @@ const logPanel       = document.getElementById('log-panel');
 const logToggleBtn   = document.getElementById('log-toggle-btn');
 const logDownloadBtn = document.getElementById('log-download-btn');
 
-function appendLogRow(elapsed, ts, col, files) {
-  // Remove empty placeholder if present
+function appendLogRow(elapsed, ts, set, col, files) {
   const empty = logPanel.querySelector('.log-empty');
   if (empty) empty.remove();
 
@@ -622,7 +625,7 @@ function appendLogRow(elapsed, ts, col, files) {
   row.innerHTML =
     `<span class="le-elapsed">${elapsed}</span>` +
     `<span class="le-ts">${ts}</span>` +
-    `<span class="le-col">col ${String(col + 1).padStart(2, '0')}</span>` +
+    `<span class="le-col">s${set} c${String(col + 1).padStart(2, '0')}</span>` +
     (files.length
       ? `<span class="le-file">${files.map(f => f.replace(AUDIO_PATH, '')).join(', ')}</span>`
       : `<span class="le-silent">—</span>`);
@@ -636,7 +639,7 @@ function rebuildLogPanel() {
     logPanel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
     return;
   }
-  logEntries.forEach(({elapsed, ts, col, files}) => appendLogRow(elapsed, ts, col, files));
+  logEntries.forEach(({elapsed, ts, set, col, files}) => appendLogRow(elapsed, ts, set, col, files));
 }
 
 function resetLog() {
@@ -652,9 +655,9 @@ function resetLog() {
 
 function downloadLog(entries) {
   if (!entries || entries.length === 0) return;
-  const lines = ['elapsed,timestamp,col,files'];
-  entries.forEach(({elapsed, ts, col, files}) =>
-    lines.push(`${elapsed},${ts},${col + 1},"${files.map(f => f.replace(AUDIO_PATH, '')).join('; ')}"`)
+  const lines = ['elapsed,timestamp,set,col,files'];
+  entries.forEach(({elapsed, ts, set, col, files}) =>
+    lines.push(`${elapsed},${ts},${set},${col + 1},"${files.map(f => f.replace(AUDIO_PATH, '')).join('; ')}"`)
   );
   const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
   const url  = URL.createObjectURL(blob);
@@ -676,15 +679,26 @@ logToggleBtn.addEventListener('click', () => {
 logDownloadBtn.addEventListener('click', () =>
   downloadLog(logEntries.length ? logEntries : prevLogEntries));
 
+// ─── Shuffle ──────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  // Fisher-Yates in-place
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 // ─── Scheduler (Web Audio look-ahead) ────────────────────────────────────────
 function scheduleAhead() {
   const until = audioCtx.currentTime + SCHEDULE_AHEAD;
-  const files  = SETS[activeSet];
-  const g      = activeGrid();
 
   while (nextStepTime < until) {
-    const col = nextStepCol;
-    const t   = nextStepTime;
+    const col           = nextStepCol;
+    const t             = nextStepTime;
+    const scheduledSet  = setPlayOrder[setPlayIndex];
+    const files         = SETS[scheduledSet];
+    const g             = grids[scheduledSet];
 
     for (let r = 0; r < NUM_ROWS; r++) {
       if (g[r][col] && buffers[files[r]]) {
@@ -695,15 +709,19 @@ function scheduleAhead() {
       }
     }
 
-    pendingVisual.push({col, time: t, logFiles: (() => {
-      const active = [];
-      for (let r = 0; r < NUM_ROWS; r++) {
-        if (g[r][col] && buffers[files[r]]) active.push(files[r]);
-      }
-      return active;
-    })()});
+    const logFiles = [];
+    for (let r = 0; r < NUM_ROWS; r++) {
+      if (g[r][col] && buffers[files[r]]) logFiles.push(files[r]);
+    }
+
+    pendingVisual.push({col, time: t, logFiles, scheduledSet});
     nextStepTime += SAMPLE_DURATION;
     nextStepCol   = (nextStepCol + 1) % numCols;
+
+    // After the last column of a loop, advance to the next set in the order
+    if (nextStepCol === 0) {
+      setPlayIndex = (setPlayIndex + 1) % setPlayOrder.length;
+    }
   }
 
   scheduleTimer = setTimeout(scheduleAhead, (SCHEDULE_AHEAD * 1000) / 2);
@@ -716,7 +734,16 @@ function visualLoop() {
     const entry = pendingVisual.shift();
     currentCol = entry.col;
     setColHighlight(currentCol);
-    // Log: elapsed relative to audioCtx start time
+
+    // Sync tab highlight if the scheduled set differs from what's shown
+    if (entry.scheduledSet !== activeSet) {
+      activeSet = entry.scheduledSet;
+      setTabsEl.querySelectorAll('.set-tab').forEach((el, i) =>
+        el.classList.toggle('active', i === activeSet));
+      renderGrid();
+    }
+
+    // Log
     const elapsedSec = entry.time - playStartCtx;
     const mm  = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
     const ss  = String(Math.floor(elapsedSec % 60)).padStart(2, '0');
@@ -724,8 +751,8 @@ function visualLoop() {
     const elapsed = `${mm}:${ss}.${ms}`;
     const wallMs  = playStartTs.getTime() + elapsedSec * 1000;
     const ts      = new Date(wallMs).toTimeString().slice(0, 8);
-    logEntries.push({elapsed, ts, col: entry.col, files: entry.logFiles});
-    if (logVisible) appendLogRow(elapsed, ts, entry.col, entry.logFiles);
+    logEntries.push({elapsed, ts, set: entry.scheduledSet + 1, col: entry.col, files: entry.logFiles});
+    if (logVisible) appendLogRow(elapsed, ts, entry.scheduledSet + 1, entry.col, entry.logFiles);
   }
   requestAnimationFrame(visualLoop);
 }
@@ -744,6 +771,10 @@ async function start() {
   pendingVisual = [];
   nextStepCol   = 0;
   nextStepTime  = audioCtx.currentTime + 0.05;
+
+  // Shuffle the set playback order fresh each session
+  setPlayOrder = shuffle(Array.from({length: NUM_SETS}, (_, i) => i));
+  setPlayIndex = 0;
 
   playStartCtx = nextStepTime;
   playStartTs  = new Date(Date.now() + 0.05 * 1000);
