@@ -358,6 +358,7 @@
 
     <div class="controls">
       <button class="play-btn" id="play-btn">Play</button>
+      <button class="play-btn" id="randomize-btn">Randomize order</button>
       <span class="status" id="status">stopped</span>
     </div>
 
@@ -772,8 +773,6 @@ async function start() {
   nextStepCol   = 0;
   nextStepTime  = audioCtx.currentTime + 0.05;
 
-  // Shuffle the set playback order fresh each session
-  setPlayOrder = shuffle(Array.from({length: NUM_SETS}, (_, i) => i));
   setPlayIndex = 0;
 
   playStartCtx = nextStepTime;
@@ -801,6 +800,11 @@ function stop() {
 }
 
 playBtn.addEventListener('click', () => isPlaying ? stop() : start());
+
+document.getElementById('randomize-btn').addEventListener('click', () => {
+  shuffle(setPlayOrder);
+  setPlayIndex = 0;
+});
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 buildSetTabs();
