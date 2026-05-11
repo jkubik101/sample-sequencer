@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Sequencer</title>
+<title>Aarhus Beat Sequencer</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
 <style>
@@ -31,6 +31,79 @@
     justify-content: center;
     padding: 40px 24px;
   }
+
+  /* ── Screens ── */
+  .screen { display: none; width: 100%; }
+  .screen.active { display: flex; }
+
+  /* ── Landing page ── */
+  #landing {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .landing-title {
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    font-size: 1.1rem;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    margin-bottom: 32px;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .landing-title span {
+    color: var(--muted);
+    font-size: 0.75rem;
+    display: block;
+    letter-spacing: 0.14em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  .landing-body {
+    font-size: 0.9rem;
+    line-height: 1.75;
+    color: var(--text);
+    margin-bottom: 36px;
+  }
+
+  .landing-body p { margin-bottom: 16px; }
+  .landing-body p:last-child { margin-bottom: 0; }
+
+  .landing-body strong {
+    color: #c0c0c4;
+    font-weight: 500;
+  }
+
+  .get-started-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 12px 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .get-started-btn:hover {
+    background: var(--surface);
+    border-color: #c0c0c4;
+  }
+
+  /* ── Sequencer screen ── */
+  #sequencer { flex-direction: column; align-items: center; }
 
   .app {
     display: flex;
@@ -363,23 +436,41 @@
 </style>
 </head>
 <body>
+<!-- ── Landing screen ── -->
+<div id="landing" class="screen active">
+  <div class="landing-title">
+    <span>Welcome to</span>
+    Aarhus Beat Sequencer (ABS)
+  </div>
+  <div class="landing-body">
+    <p><strong>Your job:</strong><br>
+    To have fun assembling short rhythms to create your own musical sequences.</p>
+
+    <p><strong>How it works:</strong><br>
+    The sequencer is set up as a grid where each row of the grid corresponds to a different short rhythm clip. As the sequencer moves from left to right across the 4 columns, it will play whichever rhythm you have selected.</p>
+
+    <p>The rhythms are organized into 5 sets with 5 rhythms (rows) per set. You can navigate between sets as the sequence plays but it won't move between sets until it reaches the end (last column) of the current set.</p>
+
+    <p>Please explore all the different sets and create the sequences that you enjoy!</p>
+
+    <p>The <strong>Get started</strong> button will take you to the sequencer. Then press play to start making sequences!</p>
+  </div>
+  <button class="get-started-btn" id="get-started-btn">Get started</button>
+</div>
+
+<!-- ── Sequencer screen ── -->
+<div id="sequencer" class="screen">
 <div class="app">
 
   <!-- Left tab strip -->
   <nav class="set-tabs" id="set-tabs">
     <div class="tabs-label">set</div>
-    <!-- injected by JS -->
   </nav>
 
   <!-- Main panel -->
   <div class="main">
     <header>
-      <h1>Sequencer</h1>
-      <div class="step-toggle">
-        <span class="step-label">steps</span>
-        <button class="step-btn active" data-steps="4">4</button>
-        <button class="step-btn" data-steps="8">8</button>
-      </div>
+      <h1>Aarhus Beat Sequencer (ABS)</h1>
     </header>
 
     <div class="grid-container">
@@ -398,8 +489,6 @@
     <div class="log-section">
       <div class="log-toolbar">
         <span class="log-title">Log</span>
-        <button class="log-btn active" id="log-toggle-btn">Hide</button>
-        <button class="log-btn" id="log-download-btn">Download</button>
       </div>
       <div class="log-panel" id="log-panel">
         <span class="log-empty">No entries yet — press Play to start logging.</span>
@@ -407,6 +496,7 @@
     </div>
 
   </div>
+</div>
 </div>
 
 <script>
@@ -590,22 +680,6 @@ function onCellClick(e) {
   });
 }
 
-// ─── Step toggle ──────────────────────────────────────────────────────────────
-document.querySelectorAll('.step-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const n = parseInt(btn.dataset.steps);
-    if (n === numCols) return;
-    if (isPlaying) stop();
-    numCols = n;
-    document.querySelectorAll('.step-btn').forEach(b =>
-      b.classList.toggle('active', b === btn));
-    resizeAllGrids(n);
-    currentCol = -1;
-    refreshTabDots();
-    renderGrid();
-  });
-});
-
 // ─── Status ───────────────────────────────────────────────────────────────────
 function updateStatus() {
   if (isPlaying) return;
@@ -668,15 +742,13 @@ async function loadAllSamples() {
 }
 
 // ─── Logging ──────────────────────────────────────────────────────────────────
-let logEntries     = [];   // [{elapsed, ts, col, files}] — current session
-let prevLogEntries = [];   // saved after stop, available for download
+let logEntries     = [];
+let prevLogEntries = [];
 let logVisible     = true;
 let playStartTs    = null;
 let playStartCtx   = null;
 
-const logPanel       = document.getElementById('log-panel');
-const logToggleBtn   = document.getElementById('log-toggle-btn');
-const logDownloadBtn = document.getElementById('log-download-btn');
+const logPanel = document.getElementById('log-panel');
 
 function appendLogRow(elapsed, ts, set, col, files) {
   const empty = logPanel.querySelector('.log-empty');
@@ -709,37 +781,8 @@ function resetLog() {
   logEntries   = [];
   playStartTs  = null;
   playStartCtx = null;
-  // Update download button: show previous log option if available
-  logDownloadBtn.textContent = prevLogEntries.length ? 'Download prev' : 'Download';
-  logDownloadBtn.classList.toggle('active', prevLogEntries.length > 0);
   logPanel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
 }
-
-function downloadLog(entries) {
-  if (!entries || entries.length === 0) return;
-  const lines = ['elapsed,timestamp,set,col,files'];
-  entries.forEach(({elapsed, ts, set, col, files}) =>
-    lines.push(`${elapsed},${ts},${set},${col + 1},"${files.map(f => f.replace(AUDIO_PATH, '')).join('; ')}"`)
-  );
-  const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `sequencer-log-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-logToggleBtn.addEventListener('click', () => {
-  logVisible = !logVisible;
-  logPanel.classList.toggle('hidden', !logVisible);
-  logToggleBtn.textContent = logVisible ? 'Hide' : 'Show';
-  logToggleBtn.classList.toggle('active', logVisible);
-  if (logVisible) rebuildLogPanel();
-});
-
-logDownloadBtn.addEventListener('click', () =>
-  downloadLog(logEntries.length ? logEntries : prevLogEntries));
 
 // ─── Shuffle ──────────────────────────────────────────────────────────────────
 function shuffle(arr) {
@@ -871,6 +914,12 @@ function stop() {
 }
 
 playBtn.addEventListener('click', () => isPlaying ? stop() : start());
+
+// ─── Screen switching ─────────────────────────────────────────────────────────
+document.getElementById('get-started-btn').addEventListener('click', () => {
+  document.getElementById('landing').classList.remove('active');
+  document.getElementById('sequencer').classList.add('active');
+});
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 buildSetTabs();
