@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Sequencer</title>
+<title>Aarhus Beat Sequencer</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
 <style>
@@ -360,9 +360,109 @@
   .le-col     { color: var(--muted); flex-shrink: 0; min-width: 44px; }
   .le-file    { color: var(--text); }
   .le-silent  { color: var(--muted); font-style: italic; }
+
+  /* ── Screens ── */
+  .screen         { display: none; width: 100%; justify-content: center; }
+  .screen.active  { display: flex; }
+
+  /* ── Landing ── */
+  #landing {
+    flex-direction: column;
+    align-items: center;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 60px 0 40px;
+  }
+
+  .landing-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .landing-title {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 1.35rem;
+    color: var(--text);
+    margin-bottom: 36px;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .landing-body {
+    font-size: 0.875rem;
+    line-height: 1.8;
+    color: #b0b0b4;
+    margin-bottom: 40px;
+    width: 100%;
+  }
+
+  .landing-body p { margin-bottom: 18px; }
+  .landing-body p:last-child { margin-bottom: 0; }
+
+  .landing-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .get-started-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 12px 36px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .get-started-btn:hover {
+    border-color: #c0c0c4;
+    background: var(--surface);
+  }
 </style>
 </head>
 <body>
+<!-- ── Landing screen ── -->
+<div id="landing" class="screen active">
+  <p class="landing-eyebrow">Welcome to</p>
+  <h2 class="landing-title">Aarhus Beat Sequencer (ABS)</h2>
+  <div class="landing-body">
+    <p>
+      <span class="landing-label">Your job</span>
+      To have fun sequencing short rhythms into your own musical creations.
+    </p>
+    <p>
+      <span class="landing-label">How it works</span>
+      The sequencer is set up as a grid where each row of the grid corresponds to a different short rhythm. As the sequencer moves from left to right across the 4 columns, it will play whichever rhythm you have selected by clicking the corresponding square.
+    </p>
+    <p>
+      The rhythms are organized into 5 sets (on the left) with 5 rhythms (rows) per set. You can navigate between sets as the sequence plays but it won't switch between sets until it reaches the end (last column) of the current set.
+    </p>
+    <p>
+      Please explore all the different sets and create the sequences that you enjoy!
+    </p>
+    <p>
+      The <strong>'Get Started'</strong> button will take you to the sequencer. Then press play to start making sequences!
+    </p>
+  </div>
+  <button class="get-started-btn" id="get-started-btn">Get Started</button>
+</div>
+
+<!-- ── Sequencer screen ── -->
+<div id="sequencer" class="screen">
 <div class="app">
 
   <!-- Left tab strip -->
@@ -374,7 +474,7 @@
   <!-- Main panel -->
   <div class="main">
     <header>
-      <h1>Sequencer</h1>
+      <h1>Aarhus Beat Sequencer (ABS)</h1>
       <div class="step-toggle">
         <span class="step-label">steps</span>
         <button class="step-btn active" data-steps="4">4</button>
@@ -407,6 +507,7 @@
     </div>
 
   </div>
+</div>
 </div>
 
 <script>
@@ -871,6 +972,12 @@ function stop() {
 }
 
 playBtn.addEventListener('click', () => isPlaying ? stop() : start());
+
+// ─── Screen switching ─────────────────────────────────────────────────────────
+document.getElementById('get-started-btn').addEventListener('click', () => {
+  document.getElementById('landing').classList.remove('active');
+  document.getElementById('sequencer').classList.add('active');
+});
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 buildSetTabs();
