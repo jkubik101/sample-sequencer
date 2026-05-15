@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Sequencer</title>
+<title>Aarhus Beat Sequencer</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
 <style>
@@ -65,16 +65,16 @@
     background: none;
     border: 1px solid var(--border);
     color: var(--muted);
-    padding: 7px 0;
+    padding: 6px 0 4px;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.1s;
+    transition: border-color 0.1s, color 0.1s, background 0.1s;
     width: 40px;
     text-align: center;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 3px;
+    gap: 4px;
   }
 
   .set-tab:hover {
@@ -82,12 +82,43 @@
     color: var(--text);
   }
 
-  .set-tab.active {
+  /* viewed tab — brighter border */
+  .set-tab.viewed {
     border-color: var(--accent);
     color: var(--text);
     background: var(--surface);
   }
 
+  /* playing tab — solid left bar */
+  .set-tab.playing-tab {
+    border-left: 2px solid #c0c0c4;
+  }
+
+  .tab-num {
+    line-height: 1;
+  }
+
+  /* bar-progress dots row */
+  .tab-dots {
+    display: flex;
+    gap: 2px;
+    height: 4px;
+    align-items: center;
+  }
+
+  .tab-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.05s;
+    flex-shrink: 0;
+  }
+
+  .tab-dot.beat-on   { background: #c0c0c4; }
+  .tab-dot.beat-past { background: var(--muted); }
+
+  /* load-state dot */
   .dot {
     width: 4px;
     height: 4px;
@@ -257,9 +288,181 @@
     margin-top: 18px;
     line-height: 1.8;
   }
+
+  /* ── Log panel ── */
+  .log-section { margin-top: 20px; }
+
+  .log-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .log-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex: 1;
+  }
+
+  .log-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.1s;
+    white-space: nowrap;
+  }
+
+  .log-btn:hover  { border-color: var(--accent); color: var(--text); }
+  .log-btn.active { border-color: var(--accent); color: var(--text); background: var(--surface); }
+
+  .log-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    max-height: 180px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .log-panel::-webkit-scrollbar       { width: 4px; }
+  .log-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .log-panel.hidden { display: none; }
+
+  .log-empty {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .log-entry {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    line-height: 1.9;
+    display: flex;
+    gap: 10px;
+  }
+
+  .le-elapsed { color: var(--muted); flex-shrink: 0; min-width: 54px; }
+  .le-ts      { color: var(--muted); flex-shrink: 0; }
+  .le-col     { color: var(--muted); flex-shrink: 0; min-width: 44px; }
+  .le-file    { color: var(--text); }
+  .le-silent  { color: var(--muted); font-style: italic; }
+
+  /* ── Screens ── */
+  .screen         { display: none; width: 100%; justify-content: center; }
+  .screen.active  { display: flex; }
+
+  /* ── Landing ── */
+  #landing {
+    flex-direction: column;
+    align-items: center;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 60px 0 40px;
+  }
+
+  .landing-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .landing-title {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 1.35rem;
+    color: var(--text);
+    margin-bottom: 36px;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .landing-body {
+    font-size: 0.875rem;
+    line-height: 1.8;
+    color: #b0b0b4;
+    margin-bottom: 40px;
+    width: 100%;
+  }
+
+  .landing-body p { margin-bottom: 18px; }
+  .landing-body p:last-child { margin-bottom: 0; }
+
+  .landing-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .get-started-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 12px 36px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .get-started-btn:hover {
+    border-color: #c0c0c4;
+    background: var(--surface);
+  }
 </style>
 </head>
 <body>
+<!-- ── Landing screen ── -->
+<div id="landing" class="screen active">
+  <p class="landing-eyebrow">Welcome to</p>
+  <h2 class="landing-title">Aarhus Beat Sequencer (ABS)</h2>
+  <div class="landing-body">
+    <p>
+      <span class="landing-label">Your job</span>
+      To have fun sequencing short rhythms into your own musical creations.
+    </p>
+    <p>
+      <span class="landing-label">How it works</span>
+      The sequencer is set up as a grid where each row of the grid corresponds to a different short rhythm. As the sequencer moves from left to right across the 4 columns, it will play whichever rhythm you have selected by clicking the corresponding square.
+    </p>
+    <p>
+      The rhythms are organized into 5 sets (on the left) with 5 rhythms (rows) per set. You can navigate between sets as the sequence plays but it won't switch between sets until it reaches the end (last column) of the current set.
+    </p>
+    <p>
+      Please explore all the different sets and create the sequences that you enjoy!
+    </p>
+    <p>
+      The <strong>'Get Started'</strong> button will take you to the sequencer. Then press play to start making sequences!
+    </p>
+  </div>
+  <button class="get-started-btn" id="get-started-btn">Get Started</button>
+</div>
+
+<!-- ── Sequencer screen ── -->
+<div id="sequencer" class="screen">
 <div class="app">
 
   <!-- Left tab strip -->
@@ -271,11 +474,11 @@
   <!-- Main panel -->
   <div class="main">
     <header>
-      <h1>Sequencer</h1>
+      <h1>Aarhus Beat Sequencer (ABS)</h1>
       <div class="step-toggle">
-        <span class="step-label">steps</span>
+        <!--<span class="step-label">steps</span>
         <button class="step-btn active" data-steps="4">4</button>
-        <button class="step-btn" data-steps="8">8</button>
+         <button class="step-btn" data-steps="8">8</button> -->
       </div>
     </header>
 
@@ -290,7 +493,21 @@
     </div>
 
     <div id="loading-notice"></div>
+
+    <!-- Log panel -->
+    <div class="log-section">
+      <div class="log-toolbar">
+        <span class="log-title">Log</span>
+        <button class="log-btn active" id="log-toggle-btn">Hide</button>
+        <button class="log-btn" id="log-download-btn">Download</button>
+      </div>
+      <div class="log-panel" id="log-panel">
+        <span class="log-empty">No entries yet — press Play to start logging.</span>
+      </div>
+    </div>
+
   </div>
+</div>
 </div>
 
 <script>
@@ -308,8 +525,13 @@ const SETS = Array.from({length: NUM_SETS}, (_, s) =>
 );
 
 // ─── State ────────────────────────────────────────────────────────────────────
-let activeSet  = 0;
+let viewedSet  = 0;   // which tab the user is currently looking at
+let playingSet = 0;   // which set is currently sounding
 let numCols    = 4;
+
+// Shuffled playback order — reshuffled on button press
+let setPlayOrder = Array.from({length: NUM_SETS}, (_, i) => i);
+let setPlayIndex = 0;
 
 // Per-set grids
 let grids = Array.from({length: NUM_SETS}, () =>
@@ -329,48 +551,77 @@ let nextStepTime  = 0;
 let nextStepCol   = 0;
 let pendingVisual = [];  // [{col, time}]
 
-// ─── DOM refs ─────────────────────────────────────────────────────────────────
-const setTabsEl     = document.getElementById('set-tabs');
-const gridEl        = document.getElementById('grid');
-const indicatorsEl  = document.getElementById('col-indicators');
-const playBtn       = document.getElementById('play-btn');
-const statusEl      = document.getElementById('status');
-const loadingNotice = document.getElementById('loading-notice');
+// ─── DOM refs (lazy — sequencer screen is hidden at parse time) ───────────────
+const setTabsEl     = () => document.getElementById('set-tabs');
+const gridEl        = () => document.getElementById('grid');
+const indicatorsEl  = () => document.getElementById('col-indicators');
+const playBtn       = () => document.getElementById('play-btn');
+const statusEl      = () => document.getElementById('status');
+const loadingNotice = () => document.getElementById('loading-notice');
 
 // ─── Set tabs ─────────────────────────────────────────────────────────────────
 function buildSetTabs() {
-  setTabsEl.querySelectorAll('.set-tab').forEach(el => el.remove());
+  setTabsEl().querySelectorAll('.set-tab').forEach(el => el.remove());
   for (let s = 0; s < NUM_SETS; s++) {
     const btn = document.createElement('button');
-    btn.className = 'set-tab' + (s === activeSet ? ' active' : '');
+    btn.className = 'set-tab';
     btn.dataset.set = s;
-    btn.innerHTML = `${s + 1}<span class="dot"></span>`;
+    btn.innerHTML =
+      `<span class="tab-num">${s + 1}</span>` +
+      `<div class="tab-dots">${'<span class="tab-dot"></span>'.repeat(numCols)}</div>` +
+      `<span class="dot"></span>`;
     btn.title = `Set ${s + 1}`;
-    btn.addEventListener('click', () => switchSet(s));
-    setTabsEl.appendChild(btn);
+    btn.addEventListener('click', () => switchViewedSet(s));
+    setTabsEl().appendChild(btn);
   }
+  refreshTabClasses();
+}
+
+function refreshTabDots() {
+  // Rebuild dot count if numCols changed
+  setTabsEl().querySelectorAll('.set-tab').forEach(tab => {
+    const dotsEl = tab.querySelector('.tab-dots');
+    if (dotsEl) dotsEl.innerHTML = '<span class="tab-dot"></span>'.repeat(numCols);
+  });
+}
+
+function refreshTabClasses() {
+  setTabsEl().querySelectorAll('.set-tab').forEach((tab, i) => {
+    tab.classList.toggle('viewed',      i === viewedSet);
+    tab.classList.toggle('playing-tab', i === playingSet && isPlaying);
+  });
 }
 
 function updateTabDot(s, state) {
-  const tab = setTabsEl.querySelector(`.set-tab[data-set="${s}"]`);
+  const tab = setTabsEl().querySelector(`.set-tab[data-set="${s}"]`);
   if (!tab) return;
   tab.classList.remove('loaded', 'error');
   if (state) tab.classList.add(state);
 }
 
-function switchSet(s) {
-  if (s === activeSet) return;
-  if (isPlaying) stop();
-  activeSet  = s;
-  currentCol = -1;
-  setTabsEl.querySelectorAll('.set-tab').forEach((el, i) =>
-    el.classList.toggle('active', i === s));
+// Update bar-progress dots on the playing tab
+function updateBarDots(playingS, col) {
+  setTabsEl().querySelectorAll('.set-tab').forEach((tab, i) => {
+    const dots = tab.querySelectorAll('.tab-dot');
+    dots.forEach((d, di) => {
+      d.classList.remove('beat-on', 'beat-past');
+      if (i === playingS) {
+        if (di === col)   d.classList.add('beat-on');
+        else if (di < col) d.classList.add('beat-past');
+      }
+    });
+  });
+}
+
+// Switch which set's grid is shown — playback unaffected until bar end
+function switchViewedSet(s) {
+  viewedSet = s;
+  refreshTabClasses();
   renderGrid();
-  updateStatus();
 }
 
 // ─── Grid ─────────────────────────────────────────────────────────────────────
-function activeGrid() { return grids[activeSet]; }
+function activeGrid() { return grids[viewedSet]; }
 
 function resizeAllGrids(newCols) {
   grids = grids.map(g =>
@@ -382,15 +633,15 @@ function resizeAllGrids(newCols) {
 function renderGrid() {
   const g = activeGrid();
 
-  indicatorsEl.innerHTML = '';
+  indicatorsEl().innerHTML = '';
   for (let c = 0; c < numCols; c++) {
     const d = document.createElement('div');
     d.className = 'col-indicator' + (c === currentCol ? ' active-col' : '');
     d.dataset.col = c;
-    indicatorsEl.appendChild(d);
+    indicatorsEl().appendChild(d);
   }
 
-  gridEl.innerHTML = '';
+  gridEl().innerHTML = '';
   for (let r = 0; r < NUM_ROWS; r++) {
     const wrap = document.createElement('div');
     wrap.className = 'grid-row-wrapper';
@@ -405,23 +656,23 @@ function renderGrid() {
     for (let c = 0; c < numCols; c++) {
       const cell = document.createElement('div');
       cell.className = 'cell'
-        + (g[r][c]          ? ' on'          : '')
-        + (c === currentCol ? ' col-playing' : '');
+        + (g[r][c]                                          ? ' on'          : '')
+        + (c === currentCol && viewedSet === playingSet     ? ' col-playing' : '');
       cell.dataset.row = r;
       cell.dataset.col = c;
       cell.addEventListener('click', onCellClick);
       row.appendChild(cell);
     }
     wrap.appendChild(row);
-    gridEl.appendChild(wrap);
+    gridEl().appendChild(wrap);
   }
 }
 
 function setColHighlight(col) {
-  indicatorsEl.querySelectorAll('.col-indicator').forEach((el, i) =>
-    el.classList.toggle('active-col', i === col));
-  gridEl.querySelectorAll('.cell').forEach(el =>
-    el.classList.toggle('col-playing', parseInt(el.dataset.col) === col));
+  indicatorsEl().querySelectorAll('.col-indicator').forEach((el, i) =>
+    el.classList.toggle('active-col', i === col && viewedSet === playingSet));
+  gridEl().querySelectorAll('.cell').forEach(el =>
+    el.classList.toggle('col-playing', parseInt(el.dataset.col) === col && viewedSet === playingSet));
 }
 
 function onCellClick(e) {
@@ -434,7 +685,7 @@ function onCellClick(e) {
     for (let row = 0; row < NUM_ROWS; row++) g[row][c] = false;
     g[r][c] = true;
   }
-  gridEl.querySelectorAll('.cell').forEach(el => {
+  gridEl().querySelectorAll('.cell').forEach(el => {
     const er = parseInt(el.dataset.row), ec = parseInt(el.dataset.col);
     el.classList.toggle('on', g[er][ec]);
   });
@@ -451,6 +702,7 @@ document.querySelectorAll('.step-btn').forEach(btn => {
       b.classList.toggle('active', b === btn));
     resizeAllGrids(n);
     currentCol = -1;
+    refreshTabDots();
     renderGrid();
   });
 });
@@ -458,17 +710,17 @@ document.querySelectorAll('.step-btn').forEach(btn => {
 // ─── Status ───────────────────────────────────────────────────────────────────
 function updateStatus() {
   if (isPlaying) return;
-  const files    = SETS[activeSet];
+  const files    = SETS[viewedSet];
   const nLoaded  = files.filter(f => buffers[f]).length;
   if (nLoaded === files.length) {
-    statusEl.textContent = 'ready';
-    statusEl.classList.remove('error');
+    statusEl().textContent = 'ready';
+    statusEl().classList.remove('error');
   } else if (nLoaded === 0) {
-    statusEl.textContent = 'no audio';
-    statusEl.classList.add('error');
+    statusEl().textContent = 'no audio';
+    statusEl().classList.add('error');
   } else {
-    statusEl.textContent = 'partial';
-    statusEl.classList.remove('error');
+    statusEl().textContent = 'partial';
+    statusEl().classList.remove('error');
   }
 }
 
@@ -476,9 +728,9 @@ function updateStatus() {
 async function loadAllSamples() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  loadingNotice.textContent = 'Loading samples…';
-  statusEl.textContent = 'loading…';
-  statusEl.classList.remove('error');
+  loadingNotice().textContent = 'Loading samples…';
+  statusEl().textContent = 'loading…';
+  statusEl().classList.remove('error');
 
   const allFiles = SETS.flat();
   let totalLoaded = 0, totalFailed = 0;
@@ -503,28 +755,125 @@ async function loadAllSamples() {
   }
 
   if (totalFailed === allFiles.length) {
-    loadingNotice.innerHTML =
+    loadingNotice().innerHTML =
       `<span style="color:#9a4a4a">No samples loaded — is this running on a local server?<br>` +
       `Run <code>start.sh</code> / <code>start.bat</code>, or:<br>` +
       `<code>python3 -m http.server 8080</code></span>`;
   } else if (totalFailed > 0) {
-    loadingNotice.textContent = `${totalLoaded}/${allFiles.length} samples loaded.`;
+    loadingNotice().textContent = `${totalLoaded}/${allFiles.length} samples loaded.`;
   } else {
-    loadingNotice.textContent = `${totalLoaded} samples loaded. Ready.`;
+    loadingNotice().textContent = `${totalLoaded} samples loaded. Ready.`;
   }
 
   updateStatus();
 }
 
+// ─── Logging ──────────────────────────────────────────────────────────────────
+let logEntries     = [];
+let prevLogEntries = [];
+let logVisible     = true;
+let playStartTs    = null;
+let playStartCtx   = null;
+
+// Resolved lazily — elements are hidden (in sequencer screen) at script parse time
+const logPanel       = () => document.getElementById('log-panel');
+const logToggleBtn   = () => document.getElementById('log-toggle-btn');
+const logDownloadBtn = () => document.getElementById('log-download-btn');
+
+function appendLogRow(elapsed, ts, set, col, files) {
+  const panel = logPanel();
+  const empty = panel.querySelector('.log-empty');
+  if (empty) empty.remove();
+
+  const row = document.createElement('div');
+  row.className = 'log-entry';
+  row.innerHTML =
+    `<span class="le-elapsed">${elapsed}</span>` +
+    `<span class="le-ts">${ts}</span>` +
+    `<span class="le-col">s${set} c${String(col + 1).padStart(2, '0')}</span>` +
+    (files.length
+      ? `<span class="le-file">${files.map(f => f.replace(AUDIO_PATH, '')).join(', ')}</span>`
+      : `<span class="le-silent">—</span>`);
+  panel.appendChild(row);
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function rebuildLogPanel() {
+  const panel = logPanel();
+  panel.innerHTML = '';
+  if (logEntries.length === 0) {
+    panel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
+    return;
+  }
+  logEntries.forEach(({elapsed, ts, set, col, files}) => appendLogRow(elapsed, ts, set, col, files));
+}
+
+function resetLog() {
+  prevLogEntries = logEntries.length ? [...logEntries] : prevLogEntries;
+  logEntries   = [];
+  playStartTs  = null;
+  playStartCtx = null;
+  const dlBtn = logDownloadBtn();
+  if (dlBtn) {
+    dlBtn.textContent = prevLogEntries.length ? 'Download prev' : 'Download';
+    dlBtn.classList.toggle('active', prevLogEntries.length > 0);
+  }
+  const panel = logPanel();
+  if (panel) panel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
+}
+
+function downloadLog(entries) {
+  if (!entries || entries.length === 0) return;
+  const lines = ['elapsed,timestamp,set,col,files'];
+  entries.forEach(({elapsed, ts, set, col, files}) =>
+    lines.push(`${elapsed},${ts},${set},${col + 1},"${files.map(f => f.replace(AUDIO_PATH, '')).join('; ')}"`)
+  );
+  const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `sequencer-log-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Wire up log buttons after screen switch (deferred so elements exist)
+function initLogButtons() {
+  logToggleBtn().addEventListener('click', () => {
+    logVisible = !logVisible;
+    logPanel().classList.toggle('hidden', !logVisible);
+    logToggleBtn().textContent = logVisible ? 'Hide' : 'Show';
+    logToggleBtn().classList.toggle('active', logVisible);
+    if (logVisible) rebuildLogPanel();
+  });
+  logDownloadBtn().addEventListener('click', () =>
+    downloadLog(logEntries.length ? logEntries : prevLogEntries));
+}
+
+// ─── Shuffle ──────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  // Fisher-Yates in-place
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 // ─── Scheduler (Web Audio look-ahead) ────────────────────────────────────────
+// nextPlayingSet tracks which set will play for the *currently being scheduled* bar.
+// At each bar boundary we snapshot viewedSet — whatever the user is looking at wins.
+let nextPlayingSet = 0;
+
 function scheduleAhead() {
   const until = audioCtx.currentTime + SCHEDULE_AHEAD;
-  const files  = SETS[activeSet];
-  const g      = activeGrid();
 
   while (nextStepTime < until) {
-    const col = nextStepCol;
-    const t   = nextStepTime;
+    const col   = nextStepCol;
+    const t     = nextStepTime;
+    const s     = nextPlayingSet;
+    const files = SETS[s];
+    const g     = grids[s];
 
     for (let r = 0; r < NUM_ROWS; r++) {
       if (g[r][col] && buffers[files[r]]) {
@@ -535,9 +884,19 @@ function scheduleAhead() {
       }
     }
 
-    pendingVisual.push({col, time: t});
+    const logFiles = [];
+    for (let r = 0; r < NUM_ROWS; r++) {
+      if (g[r][col] && buffers[files[r]]) logFiles.push(files[r]);
+    }
+
+    pendingVisual.push({col, time: t, logFiles, scheduledSet: s});
     nextStepTime += SAMPLE_DURATION;
     nextStepCol   = (nextStepCol + 1) % numCols;
+
+    // At the end of the bar, snapshot whichever set the user is currently viewing
+    if (nextStepCol === 0) {
+      nextPlayingSet = viewedSet;
+    }
   }
 
   scheduleTimer = setTimeout(scheduleAhead, (SCHEDULE_AHEAD * 1000) / 2);
@@ -547,8 +906,30 @@ function visualLoop() {
   if (!isPlaying) return;
   const now = audioCtx.currentTime;
   while (pendingVisual.length && pendingVisual[0].time <= now) {
-    currentCol = pendingVisual.shift().col;
+    const entry = pendingVisual.shift();
+    currentCol = entry.col;
+
+    // Update playingSet and refresh tabs if it changed
+    if (entry.scheduledSet !== playingSet) {
+      playingSet = entry.scheduledSet;
+      refreshTabClasses();
+      // If we're viewing the playing set, re-render grid to show col highlight
+      if (viewedSet === playingSet) renderGrid();
+    }
+
     setColHighlight(currentCol);
+    updateBarDots(playingSet, currentCol);
+
+    // Log
+    const elapsedSec = entry.time - playStartCtx;
+    const mm  = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+    const ss  = String(Math.floor(elapsedSec % 60)).padStart(2, '0');
+    const ms  = String(Math.floor((elapsedSec % 1) * 1000)).padStart(3, '0');
+    const elapsed = `${mm}:${ss}.${ms}`;
+    const wallMs  = playStartTs.getTime() + elapsedSec * 1000;
+    const ts      = new Date(wallMs).toTimeString().slice(0, 8);
+    logEntries.push({elapsed, ts, set: entry.scheduledSet + 1, col: entry.col, files: entry.logFiles});
+    if (logVisible) appendLogRow(elapsed, ts, entry.scheduledSet + 1, entry.col, entry.logFiles);
   }
   requestAnimationFrame(visualLoop);
 }
@@ -559,14 +940,24 @@ async function start() {
   if (audioCtx.state === 'suspended') await audioCtx.resume();
 
   isPlaying = true;
-  playBtn.textContent = 'Stop';
-  playBtn.classList.add('playing');
-  statusEl.textContent = 'playing';
-  statusEl.classList.remove('error');
+  playBtn().textContent = 'Stop';
+  playBtn().classList.add('playing');
+  statusEl().textContent = 'playing';
+  statusEl().classList.remove('error');
 
-  pendingVisual = [];
-  nextStepCol   = 0;
-  nextStepTime  = audioCtx.currentTime + 0.05;
+  pendingVisual  = [];
+  nextStepCol    = 0;
+  nextStepTime   = audioCtx.currentTime + 0.05;
+  nextPlayingSet = viewedSet;
+
+  playingSet = viewedSet;
+  refreshTabClasses();
+
+  playStartCtx = nextStepTime;
+  playStartTs  = new Date(Date.now() + 0.05 * 1000);
+
+  logDownloadBtn().textContent = 'Download';
+  logDownloadBtn().classList.remove('active');
 
   scheduleAhead();
   requestAnimationFrame(visualLoop);
@@ -579,18 +970,26 @@ function stop() {
   pendingVisual = [];
   currentCol    = -1;
 
-  playBtn.textContent = 'Play';
-  playBtn.classList.remove('playing');
+  playBtn().textContent = 'Play';
+  playBtn().classList.remove('playing');
   setColHighlight(-1);
+  updateBarDots(-1, -1);
+  refreshTabClasses();
   updateStatus();
+  resetLog();
 }
 
-playBtn.addEventListener('click', () => isPlaying ? stop() : start());
-
-// ─── Init ─────────────────────────────────────────────────────────────────────
-buildSetTabs();
-renderGrid();
-loadAllSamples();
+// ─── Screen switching ─────────────────────────────────────────────────────────
+document.getElementById('get-started-btn').addEventListener('click', () => {
+  document.getElementById('landing').classList.remove('active');
+  document.getElementById('sequencer').classList.add('active');
+  // Init everything now that sequencer DOM elements are visible
+  buildSetTabs();
+  renderGrid();
+  loadAllSamples();
+  playBtn().addEventListener('click', () => isPlaying ? stop() : start());
+  initLogButtons();
+});
 </script>
 </body>
 </html>
