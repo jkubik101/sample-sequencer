@@ -94,6 +94,31 @@
     border-left: 2px solid #c0c0c4;
   }
 
+  /* queued tab — dashed border */
+  .set-tab.queued-tab {
+    border-style: dashed;
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  /* queue button inside each tab */
+  .queue-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 2px;
+    padding: 1px 4px;
+    cursor: pointer;
+    transition: all 0.1s;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .queue-btn:hover       { border-color: var(--accent); color: var(--text); }
+  .queue-btn.queued      { border-color: var(--accent); color: var(--text); background: var(--surface); }
+
   .tab-num {
     line-height: 1;
   }
@@ -476,9 +501,9 @@
     <header>
       <h1>Aarhus Beat Sequencer (ABS)</h1>
       <div class="step-toggle">
-        <!--<span class="step-label">steps</span>
+        <span class="step-label">steps</span>
         <button class="step-btn active" data-steps="4">4</button>
-         <button class="step-btn" data-steps="8">8</button> -->
+        <button class="step-btn" data-steps="8">8</button>
       </div>
     </header>
 
@@ -527,6 +552,7 @@ const SETS = Array.from({length: NUM_SETS}, (_, s) =>
 // ─── State ────────────────────────────────────────────────────────────────────
 let viewedSet  = 0;   // which tab the user is currently looking at
 let playingSet = 0;   // which set is currently sounding
+let queuedSet  = null; // set queued to play at next bar end (null = loop current)
 let numCols    = 4;
 
 // Shuffled playback order — reshuffled on button press
@@ -569,9 +595,19 @@ function buildSetTabs() {
     btn.innerHTML =
       `<span class="tab-num">${s + 1}</span>` +
       `<div class="tab-dots">${'<span class="tab-dot"></span>'.repeat(numCols)}</div>` +
-      `<span class="dot"></span>`;
+      `<span class="dot"></span>` +
+      `<button class="queue-btn" data-set="${s}" title="Queue this set">next</button>`;
     btn.title = `Set ${s + 1}`;
-    btn.addEventListener('click', () => switchViewedSet(s));
+    btn.addEventListener('click', (e) => {
+      // Don't trigger tab view switch when clicking queue button
+      if (e.target.classList.contains('queue-btn')) return;
+      switchViewedSet(s);
+    });
+    // Queue button handler — stop propagation so it doesn't trigger tab click
+    btn.querySelector('.queue-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      queueSet(s);
+    });
     setTabsEl().appendChild(btn);
   }
   refreshTabClasses();
@@ -589,6 +625,9 @@ function refreshTabClasses() {
   setTabsEl().querySelectorAll('.set-tab').forEach((tab, i) => {
     tab.classList.toggle('viewed',      i === viewedSet);
     tab.classList.toggle('playing-tab', i === playingSet && isPlaying);
+    tab.classList.toggle('queued-tab',  i === queuedSet);
+    const qBtn = tab.querySelector('.queue-btn');
+    if (qBtn) qBtn.classList.toggle('queued', i === queuedSet);
   });
 }
 
@@ -618,6 +657,12 @@ function switchViewedSet(s) {
   viewedSet = s;
   refreshTabClasses();
   renderGrid();
+}
+
+// Queue a set to play at the next bar boundary (press again to cancel)
+function queueSet(s) {
+  queuedSet = (queuedSet === s) ? null : s;
+  refreshTabClasses();
 }
 
 // ─── Grid ─────────────────────────────────────────────────────────────────────
@@ -893,9 +938,14 @@ function scheduleAhead() {
     nextStepTime += SAMPLE_DURATION;
     nextStepCol   = (nextStepCol + 1) % numCols;
 
-    // At the end of the bar, snapshot whichever set the user is currently viewing
+    // At the end of the bar, switch to queued set if one is set, else loop current
     if (nextStepCol === 0) {
-      nextPlayingSet = viewedSet;
+      if (queuedSet !== null) {
+        nextPlayingSet = queuedSet;
+        queuedSet = null;
+      } else {
+        nextPlayingSet = playingSet; // loop current set
+      }
     }
   }
 
@@ -912,8 +962,7 @@ function visualLoop() {
     // Update playingSet and refresh tabs if it changed
     if (entry.scheduledSet !== playingSet) {
       playingSet = entry.scheduledSet;
-      refreshTabClasses();
-      // If we're viewing the playing set, re-render grid to show col highlight
+      refreshTabClasses(); // also clears queued-tab once consumed
       if (viewedSet === playingSet) renderGrid();
     }
 
@@ -974,6 +1023,7 @@ function stop() {
   playBtn().classList.remove('playing');
   setColHighlight(-1);
   updateBarDots(-1, -1);
+  queuedSet = null;
   refreshTabClasses();
   updateStatus();
   resetLog();
