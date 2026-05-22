@@ -46,7 +46,7 @@
     flex-direction: column;
     gap: 4px;
     flex-shrink: 0;
-    padding-top: 52px; /* align with grid top, below header */
+    padding-top: 52px;
   }
 
   .tabs-label {
@@ -59,13 +59,52 @@
     text-align: center;
   }
 
+  /* wrapper row: [queue-btn] [set-tab] */
+  .tab-row {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  /* ── Queue button (left of tab) ── */
+  .queue-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 3px;
+    width: 20px;
+    cursor: pointer;
+    transition: all 0.12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0;
+  }
+
+  .queue-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  /* queued state — amber-ish so it reads as "pending" */
+  .queue-btn.queued {
+    border-color: #8a7a4a;
+    color: #c4aa60;
+    background: #2a2618;
+  }
+
+  /* ── Set tab ── */
   .set-tab {
     font-family: 'DM Mono', monospace;
     font-size: 0.72rem;
     background: none;
     border: 1px solid var(--border);
     color: var(--muted);
-    padding: 6px 0 4px;
+    padding: 5px 0 4px;
     border-radius: 4px;
     cursor: pointer;
     transition: border-color 0.1s, color 0.1s, background 0.1s;
@@ -82,16 +121,26 @@
     color: var(--text);
   }
 
-  /* viewed tab — brighter border */
+  /* viewed — subtle highlight */
   .set-tab.viewed {
     border-color: var(--accent);
     color: var(--text);
     background: var(--surface);
   }
 
-  /* playing tab — solid left bar */
+  /* playing — bright, solid, clearly "on" */
   .set-tab.playing-tab {
-    border-left: 2px solid #c0c0c4;
+    border-color: #c0c0c4;
+    border-width: 2px;
+    color: #e0e0e2;
+    background: #333336;
+  }
+
+  /* queued — amber tint matching queue button */
+  .set-tab.queued-tab {
+    border-color: #8a7a4a;
+    border-style: dashed;
+    color: #c4aa60;
   }
 
   .tab-num {
@@ -432,6 +481,101 @@
     border-color: #c0c0c4;
     background: var(--surface);
   }
+
+  /* ── Showcase ── */
+  .showcase-intro {
+    font-size: 0.875rem;
+    color: #b0b0b4;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+
+  .showcase-intro strong { color: var(--text); font-weight: 500; }
+
+  .showcase-sets {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 36px;
+  }
+
+  .showcase-set {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 10px 12px;
+  }
+
+  .showcase-set-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .showcase-set-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    flex: 1;
+  }
+
+  .sc-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 3px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.1s;
+    white-space: nowrap;
+  }
+
+  .sc-btn:hover   { border-color: var(--accent); color: var(--text); }
+  .sc-btn.playing { border-color: #c0c0c4; color: #e0e0e2; background: #333336; }
+
+  .showcase-samples {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .showcase-sample {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sc-sample-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    width: 18px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .sc-sample-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 2px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.1s;
+    flex: 1;
+    text-align: left;
+  }
+
+  .sc-sample-btn:hover   { border-color: var(--accent); color: var(--text); }
+  .sc-sample-btn.playing { border-color: #c0c0c4; color: #e0e0e2; background: #2e2e31; }
 </style>
 </head>
 <body>
@@ -458,6 +602,16 @@
       The <strong>'Get Started'</strong> button will take you to the sequencer. Then press play to start making sequences!
     </p>
   </div>
+
+  <!-- Showcase -->
+  <div class="showcase-intro">
+    <strong>Explore the sets</strong><br>
+    Before jumping in, feel free to listen to the available rhythms. Each set has 5 samples — you can play them one by one or listen to the whole set at once. Click a playing button again to stop it.
+  </div>
+  <div class="showcase-sets" id="showcase-sets">
+    <!-- injected by JS -->
+  </div>
+
   <button class="get-started-btn" id="get-started-btn">Get Started</button>
 </div>
 
@@ -476,9 +630,9 @@
     <header>
       <h1>Aarhus Beat Sequencer (ABS)</h1>
       <div class="step-toggle">
-        <!--<span class="step-label">steps</span>
+        <span class="step-label">steps</span>
         <button class="step-btn active" data-steps="4">4</button>
-         <button class="step-btn" data-steps="8">8</button> -->
+        <button class="step-btn" data-steps="8">8</button>
       </div>
     </header>
 
@@ -527,6 +681,7 @@ const SETS = Array.from({length: NUM_SETS}, (_, s) =>
 // ─── State ────────────────────────────────────────────────────────────────────
 let viewedSet  = 0;   // which tab the user is currently looking at
 let playingSet = 0;   // which set is currently sounding
+let queuedSet  = null; // set queued to play at next bar end (null = loop current)
 let numCols    = 4;
 
 // Shuffled playback order — reshuffled on button press
@@ -569,9 +724,19 @@ function buildSetTabs() {
     btn.innerHTML =
       `<span class="tab-num">${s + 1}</span>` +
       `<div class="tab-dots">${'<span class="tab-dot"></span>'.repeat(numCols)}</div>` +
-      `<span class="dot"></span>`;
+      `<span class="dot"></span>` +
+      `<button class="queue-btn" data-set="${s}" title="Queue this set">next</button>`;
     btn.title = `Set ${s + 1}`;
-    btn.addEventListener('click', () => switchViewedSet(s));
+    btn.addEventListener('click', (e) => {
+      // Don't trigger tab view switch when clicking queue button
+      if (e.target.classList.contains('queue-btn')) return;
+      switchViewedSet(s);
+    });
+    // Queue button handler — stop propagation so it doesn't trigger tab click
+    btn.querySelector('.queue-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      queueSet(s);
+    });
     setTabsEl().appendChild(btn);
   }
   refreshTabClasses();
@@ -589,6 +754,9 @@ function refreshTabClasses() {
   setTabsEl().querySelectorAll('.set-tab').forEach((tab, i) => {
     tab.classList.toggle('viewed',      i === viewedSet);
     tab.classList.toggle('playing-tab', i === playingSet && isPlaying);
+    tab.classList.toggle('queued-tab',  i === queuedSet);
+    const qBtn = tab.querySelector('.queue-btn');
+    if (qBtn) qBtn.classList.toggle('queued', i === queuedSet);
   });
 }
 
@@ -618,6 +786,12 @@ function switchViewedSet(s) {
   viewedSet = s;
   refreshTabClasses();
   renderGrid();
+}
+
+// Queue a set to play at the next bar boundary (press again to cancel)
+function queueSet(s) {
+  queuedSet = (queuedSet === s) ? null : s;
+  refreshTabClasses();
 }
 
 // ─── Grid ─────────────────────────────────────────────────────────────────────
@@ -893,9 +1067,14 @@ function scheduleAhead() {
     nextStepTime += SAMPLE_DURATION;
     nextStepCol   = (nextStepCol + 1) % numCols;
 
-    // At the end of the bar, snapshot whichever set the user is currently viewing
+    // At the end of the bar, switch to queued set if one is set, else loop current
     if (nextStepCol === 0) {
-      nextPlayingSet = viewedSet;
+      if (queuedSet !== null) {
+        nextPlayingSet = queuedSet;
+        queuedSet = null;
+      } else {
+        nextPlayingSet = playingSet; // loop current set
+      }
     }
   }
 
@@ -912,8 +1091,7 @@ function visualLoop() {
     // Update playingSet and refresh tabs if it changed
     if (entry.scheduledSet !== playingSet) {
       playingSet = entry.scheduledSet;
-      refreshTabClasses();
-      // If we're viewing the playing set, re-render grid to show col highlight
+      refreshTabClasses(); // also clears queued-tab once consumed
       if (viewedSet === playingSet) renderGrid();
     }
 
@@ -974,22 +1152,212 @@ function stop() {
   playBtn().classList.remove('playing');
   setColHighlight(-1);
   updateBarDots(-1, -1);
+  queuedSet = null;
   refreshTabClasses();
   updateStatus();
   resetLog();
 }
 
+// ─── Showcase (landing page preview) ─────────────────────────────────────────
+// Tracks currently playing preview source nodes: { key: AudioBufferSourceNode }
+// key is 'set-N' for whole set (loops all 5) or 'N-R' for single sample
+let scPlaying = {};  // key → { sources: [AudioBufferSourceNode], stopFn }
+
+function scStop(key) {
+  if (scPlaying[key]) {
+    scPlaying[key].sources.forEach(s => { try { s.stop(); } catch(e) {} });
+    delete scPlaying[key];
+  }
+}
+
+function scStopAll() {
+  Object.keys(scPlaying).forEach(scStop);
+}
+
+function scPlaySample(setIdx, rowIdx, btnEl) {
+  const key  = `${setIdx}-${rowIdx}`;
+  const file = SETS[setIdx][rowIdx];
+  if (!buffers[file]) return;
+
+  // Toggle off if already playing
+  if (scPlaying[key]) {
+    scStop(key);
+    btnEl.textContent = file.replace(AUDIO_PATH, '');
+    btnEl.classList.remove('playing');
+    return;
+  }
+
+  // Stop any other single-sample in this set playing (optional: allow overlap)
+  // Stop whole-set preview for this set if running
+  scStop(`set-${setIdx}`);
+  document.querySelectorAll(`.sc-btn[data-set="${setIdx}"]`)
+    .forEach(b => { b.textContent = '▶ play set'; b.classList.remove('playing'); });
+
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffers[file];
+  src.loop   = true;
+  src.connect(audioCtx.destination);
+  src.start();
+
+  scPlaying[key] = { sources: [src], stopFn: () => src.stop() };
+  btnEl.textContent = '■ ' + file.replace(AUDIO_PATH, '');
+  btnEl.classList.add('playing');
+
+  src.onended = () => {
+    if (scPlaying[key]) {
+      delete scPlaying[key];
+      btnEl.textContent = file.replace(AUDIO_PATH, '');
+      btnEl.classList.remove('playing');
+    }
+  };
+}
+
+function scPlaySet(setIdx, btnEl) {
+  const key = `set-${setIdx}`;
+
+  // Toggle off
+  if (scPlaying[key]) {
+    scStop(key);
+    btnEl.textContent = '▶ play set';
+    btnEl.classList.remove('playing');
+    return;
+  }
+
+  // Stop any individual sample previews for this set
+  for (let r = 0; r < NUM_ROWS; r++) {
+    const sk = `${setIdx}-${r}`;
+    if (scPlaying[sk]) {
+      scStop(sk);
+      const sb = document.querySelector(`.sc-sample-btn[data-set="${setIdx}"][data-row="${r}"]`);
+      if (sb) { sb.textContent = SETS[setIdx][r].replace(AUDIO_PATH, ''); sb.classList.remove('playing'); }
+    }
+  }
+
+  // Start all 5 samples looping in sync
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const sources = [];
+  const startAt = audioCtx.currentTime + 0.05;
+  SETS[setIdx].forEach((file, r) => {
+    if (!buffers[file]) return;
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffers[file];
+    src.loop   = true;
+    src.connect(audioCtx.destination);
+    src.start(startAt);
+    sources.push(src);
+  });
+
+  scPlaying[key] = { sources };
+  btnEl.textContent = '■ stop set';
+  btnEl.classList.add('playing');
+}
+
+function buildShowcase() {
+  const container = document.getElementById('showcase-sets');
+  if (!container) return;
+  container.innerHTML = '';
+
+  for (let s = 0; s < NUM_SETS; s++) {
+    const setEl = document.createElement('div');
+    setEl.className = 'showcase-set';
+
+    // Header row: label + play-set button
+    const header = document.createElement('div');
+    header.className = 'showcase-set-header';
+
+    const label = document.createElement('span');
+    label.className = 'showcase-set-label';
+    label.textContent = `Set ${s + 1}`;
+
+    const playSetBtn = document.createElement('button');
+    playSetBtn.className = 'sc-btn';
+    playSetBtn.dataset.set = s;
+    playSetBtn.textContent = '▶ play set';
+    playSetBtn.addEventListener('click', () => scPlaySet(s, playSetBtn));
+
+    header.appendChild(label);
+    header.appendChild(playSetBtn);
+    setEl.appendChild(header);
+
+    // Sample rows
+    const samplesEl = document.createElement('div');
+    samplesEl.className = 'showcase-samples';
+
+    SETS[s].forEach((file, r) => {
+      const row = document.createElement('div');
+      row.className = 'showcase-sample';
+
+      const rowLabel = document.createElement('span');
+      rowLabel.className = 'sc-sample-label';
+      rowLabel.textContent = String(r + 1).padStart(2, '0');
+
+      const sampleBtn = document.createElement('button');
+      sampleBtn.className = 'sc-sample-btn';
+      sampleBtn.dataset.set = s;
+      sampleBtn.dataset.row = r;
+      sampleBtn.textContent = buffers[file] ? file.replace(AUDIO_PATH, '') : file.replace(AUDIO_PATH, '') + ' (loading…)';
+      sampleBtn.addEventListener('click', () => {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        scPlaySample(s, r, sampleBtn);
+      });
+
+      row.appendChild(rowLabel);
+      row.appendChild(sampleBtn);
+      samplesEl.appendChild(row);
+    });
+
+    setEl.appendChild(samplesEl);
+    container.appendChild(setEl);
+  }
+}
+
 // ─── Screen switching ─────────────────────────────────────────────────────────
 document.getElementById('get-started-btn').addEventListener('click', () => {
+  scStopAll();
   document.getElementById('landing').classList.remove('active');
   document.getElementById('sequencer').classList.add('active');
-  // Init everything now that sequencer DOM elements are visible
   buildSetTabs();
   renderGrid();
-  loadAllSamples();
+  // Samples already loaded on page init — just update the notice
+  const allFiles = SETS.flat();
+  const loaded   = allFiles.filter(f => buffers[f]).length;
+  const notice   = loadingNotice();
+  if (notice) {
+    if (loaded === allFiles.length) {
+      notice.textContent = `${loaded} samples loaded. Ready.`;
+    } else if (loaded === 0) {
+      notice.innerHTML = `<span style="color:#9a4a4a">No samples loaded. Make sure you're running via a local server.</span>`;
+    } else {
+      notice.textContent = `${loaded}/${allFiles.length} samples loaded.`;
+    }
+  }
+  // Update tab dots
+  for (let s = 0; s < NUM_SETS; s++) {
+    const n = SETS[s].filter(f => buffers[f]).length;
+    updateTabDot(s, n === SETS[s].length ? 'loaded' : n === 0 ? 'error' : 'loaded');
+  }
+  updateStatus();
   playBtn().addEventListener('click', () => isPlaying ? stop() : start());
   initLogButtons();
 });
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+// Load samples on page load so showcase is ready immediately
+(async () => {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const allFiles = SETS.flat();
+  await Promise.all(allFiles.map(async file => {
+    try {
+      const res = await fetch(file);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const ab = await res.arrayBuffer();
+      buffers[file] = await audioCtx.decodeAudioData(ab);
+    } catch(e) {
+      console.warn('Could not load', file, e);
+    }
+  }));
+  buildShowcase();
+})();
 </script>
 </body>
 </html>
