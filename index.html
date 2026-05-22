@@ -1187,12 +1187,13 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
     return;
   }
 
+ /* 
   // Stop any other single-sample in this set playing (optional: allow overlap)
   // Stop whole-set preview for this set if running
   scStop(`set-${setIdx}`);
   document.querySelectorAll(`.sc-btn[data-set="${setIdx}"]`)
     .forEach(b => { b.textContent = '▶ play set'; b.classList.remove('playing'); });
-
+*/
   const src = audioCtx.createBufferSource();
   src.buffer = buffers[file];
   src.loop   = true;
