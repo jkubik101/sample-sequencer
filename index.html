@@ -1219,7 +1219,7 @@ function scPlaySet(setIdx, btnEl) {
   // Toggle off
   if (scPlaying[key]) {
     scStop(key);
-    btnEl.textContent = '▶ play set';
+    btnEl.textContent = ''; //'▶ play set';
     btnEl.classList.remove('playing');
     return;
   }
@@ -1273,7 +1273,7 @@ function buildShowcase() {
     const playSetBtn = document.createElement('button');
     playSetBtn.className = 'sc-btn';
     playSetBtn.dataset.set = s;
-    playSetBtn.textContent = '▶ play set';
+    playSetBtn.textContent = ''; // '▶ play set';
     playSetBtn.addEventListener('click', () => scPlaySet(s, playSetBtn));
 
     header.appendChild(label);
