@@ -32,390 +32,12 @@
     padding: 40px 24px;
   }
 
-  .app {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    width: 100%;
-    max-width: 700px;
-  }
-
-  /* ── Set tab strip ── */
-  .set-tabs {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex-shrink: 0;
-    padding-top: 52px;
-  }
-
-  .tabs-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    text-align: center;
-  }
-
-  /* wrapper row: [queue-btn] [set-tab] */
-  .tab-row {
-    display: flex;
-    align-items: stretch;
-    gap: 4px;
-  }
-
-  /* ── Queue button (left of tab) ── */
-  .queue-btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.6rem;
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    border-radius: 3px;
-    width: 20px;
-    cursor: pointer;
-    transition: all 0.12s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    padding: 0;
-  }
-
-  .queue-btn:hover {
-    border-color: var(--accent);
-    color: var(--text);
-    background: var(--surface);
-  }
-
-  /* queued state — amber-ish so it reads as "pending" */
-  .queue-btn.queued {
-    border-color: #8a7a4a;
-    color: #c4aa60;
-    background: #2a2618;
-  }
-
-  /* ── Set tab ── */
-  .set-tab {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 5px 0 4px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: border-color 0.1s, color 0.1s, background 0.1s;
-    width: 40px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .set-tab:hover {
-    border-color: var(--accent);
-    color: var(--text);
-  }
-
-  /* viewed — subtle highlight */
-  .set-tab.viewed {
-    border-color: var(--accent);
-    color: var(--text);
-    background: var(--surface);
-  }
-
-  /* playing — bright, solid, clearly "on" */
-  .set-tab.playing-tab {
-    border-color: #c0c0c4;
-    border-width: 2px;
-    color: #e0e0e2;
-    background: #333336;
-  }
-
-  /* queued — amber tint matching queue button */
-  .set-tab.queued-tab {
-    border-color: #8a7a4a;
-    border-style: dashed;
-    color: #c4aa60;
-  }
-
-  .tab-num {
-    line-height: 1;
-  }
-
-  /* bar-progress dots row */
-  .tab-dots {
-    display: flex;
-    gap: 2px;
-    height: 4px;
-    align-items: center;
-  }
-
-  .tab-dot {
-    width: 3px;
-    height: 3px;
-    border-radius: 50%;
-    background: var(--border);
-    transition: background 0.05s;
-    flex-shrink: 0;
-  }
-
-  .tab-dot.beat-on   { background: #c0c0c4; }
-  .tab-dot.beat-past { background: var(--muted); }
-
-  /* load-state dot */
-  .dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--border);
-    flex-shrink: 0;
-    transition: background 0.3s;
-  }
-
-  .set-tab.loaded .dot { background: #5a7a5a; }
-  .set-tab.error  .dot { background: #7a4a4a; }
-
-  /* ── Main ── */
-  .main {
-    flex: 1;
-    min-width: 0;
-  }
-
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 28px;
-  }
-
-  h1 {
-    font-family: 'DM Mono', monospace;
-    font-weight: 400;
-    font-size: 0.8rem;
-    letter-spacing: 0.14em;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-
-  .step-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .step-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--muted);
-  }
-
-  .step-btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 4px 8px;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.1s;
-  }
-
-  .step-btn.active {
-    border-color: var(--accent);
-    color: var(--text);
-    background: var(--surface);
-  }
-
-  .grid-container {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 18px;
-    margin-bottom: 16px;
-  }
-
-  .col-indicators {
-    display: flex;
-    gap: 6px;
-    margin-left: 34px;
-    margin-bottom: 10px;
-  }
-
-  .col-indicator {
-    flex: 1;
-    height: 2px;
-    background: var(--border);
-    border-radius: 1px;
-    transition: background 0.06s;
-  }
-
-  .col-indicator.active-col { background: #c0c0c4; }
-
-  .grid-row-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
-
-  .grid-row-wrapper:last-child { margin-bottom: 0; }
-
-  .row-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--muted);
-    width: 26px;
-    text-align: right;
-    flex-shrink: 0;
-  }
-
-  .grid-row {
-    display: flex;
-    gap: 6px;
-    flex: 1;
-  }
-
-  .cell {
-    flex: 1;
-    aspect-ratio: 1.4 / 1;
-    background: var(--cell-off);
-    border-radius: 3px;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: background 0.08s, border-color 0.08s;
-  }
-
-  .cell:hover          { background: var(--cell-off-hover); }
-  .cell.on             { background: var(--cell-on); }
-  .cell.on:hover       { background: #c0c0c4; }
-  .cell.col-playing    { border-color: var(--accent); }
-  .cell.on.col-playing { background: #d0d0d4; border-color: transparent; }
-
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .play-btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 9px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.1s;
-    min-width: 80px;
-  }
-
-  .play-btn:hover   { border-color: var(--accent); background: var(--surface); }
-  .play-btn.playing { border-color: var(--accent); }
-
-  .status {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--muted);
-    letter-spacing: 0.05em;
-  }
-
-  .status.error { color: #9a4a4a; }
-
-  #loading-notice {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--muted);
-    margin-top: 18px;
-    line-height: 1.8;
-  }
-
-  /* ── Log panel ── */
-  .log-section { margin-top: 20px; }
-
-  .log-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-
-  .log-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    flex: 1;
-  }
-
-  .log-btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 3px 8px;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.1s;
-    white-space: nowrap;
-  }
-
-  .log-btn:hover  { border-color: var(--accent); color: var(--text); }
-  .log-btn.active { border-color: var(--accent); color: var(--text); background: var(--surface); }
-
-  .log-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 12px 14px;
-    max-height: 180px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-  }
-
-  .log-panel::-webkit-scrollbar       { width: 4px; }
-  .log-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  .log-panel.hidden { display: none; }
-
-  .log-empty {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--muted);
-    font-style: italic;
-  }
-
-  .log-entry {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    line-height: 1.9;
-    display: flex;
-    gap: 10px;
-  }
-
-  .le-elapsed { color: var(--muted); flex-shrink: 0; min-width: 54px; }
-  .le-ts      { color: var(--muted); flex-shrink: 0; }
-  .le-col     { color: var(--muted); flex-shrink: 0; min-width: 44px; }
-  .le-file    { color: var(--text); }
-  .le-silent  { color: var(--muted); font-style: italic; }
-
   /* ── Screens ── */
-  .screen         { display: none; width: 100%; justify-content: center; }
-  .screen.active  { display: flex; }
+  .screen        { display: none; width: 100%; justify-content: center; }
+  .screen.active { display: flex; }
 
-  /* ── Landing ── */
-  #landing {
+  /* ── Shared landing/showcase layout ── */
+  .landing-wrap {
     flex-direction: column;
     align-items: center;
     max-width: 520px;
@@ -463,21 +85,34 @@
     margin-bottom: 4px;
   }
 
-  .get-started-btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.78rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    background: none;
-    border: 1px solid var(--accent);
-    color: var(--text);
-    padding: 12px 36px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
+  .landing-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
   }
 
-  .get-started-btn:hover {
+  .nav-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+
+  .nav-btn:hover { border-color: var(--accent); color: var(--text); }
+
+  .nav-btn.primary {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .nav-btn.primary:hover {
     border-color: #c0c0c4;
     background: var(--surface);
   }
@@ -539,17 +174,9 @@
   .sc-btn:hover   { border-color: var(--accent); color: var(--text); }
   .sc-btn.playing { border-color: #c0c0c4; color: #e0e0e2; background: #333336; }
 
-  .showcase-samples {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
+  .showcase-samples { display: flex; flex-direction: column; gap: 4px; }
 
-  .showcase-sample {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .showcase-sample { display: flex; align-items: center; gap: 8px; }
 
   .sc-sample-label {
     font-family: 'DM Mono', monospace;
@@ -576,63 +203,382 @@
 
   .sc-sample-btn:hover   { border-color: var(--accent); color: var(--text); }
   .sc-sample-btn.playing { border-color: #c0c0c4; color: #e0e0e2; background: #2e2e31; }
+
+  /* ── Sequencer app layout ── */
+  #sequencer { flex-direction: column; align-items: center; }
+
+  .app {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  /* ── Set tab strip ── */
+  .set-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+    padding-top: 52px;
+  }
+
+  .tabs-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+
+  .set-tab {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 0 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.1s, color 0.1s, background 0.1s;
+    width: 40px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .set-tab:hover { border-color: var(--accent); color: var(--text); }
+
+  /* viewed — user is looking at this set */
+  .set-tab.viewed {
+    border-color: var(--accent);
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  /* playing — currently sounding */
+  .set-tab.playing-tab {
+    border-color: #c0c0c4;
+    border-width: 2px;
+    color: #e0e0e2;
+    background: #333336;
+  }
+
+  .tab-num { line-height: 1; }
+
+  .tab-dots {
+    display: flex;
+    gap: 2px;
+    height: 4px;
+    align-items: center;
+  }
+
+  .tab-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.05s;
+    flex-shrink: 0;
+  }
+
+  .tab-dot.beat-on   { background: #c0c0c4; }
+  .tab-dot.beat-past { background: var(--muted); }
+
+  .dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+
+  .set-tab.loaded .dot { background: #5a7a5a; }
+  .set-tab.error  .dot { background: #7a4a4a; }
+
+  /* ── Main panel ── */
+  .main { flex: 1; min-width: 0; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  h1 {
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .step-toggle { display: flex; align-items: center; gap: 8px; }
+
+  .step-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .step-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+
+  .step-btn.active { border-color: var(--accent); color: var(--text); background: var(--surface); }
+
+  .grid-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .col-indicators {
+    display: flex;
+    gap: 6px;
+    margin-left: 34px;
+    margin-bottom: 10px;
+  }
+
+  .col-indicator {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    transition: background 0.06s;
+  }
+
+  .col-indicator.active-col { background: #c0c0c4; }
+
+  .grid-row-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .grid-row-wrapper:last-child { margin-bottom: 0; }
+
+  .row-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    width: 26px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .grid-row { display: flex; gap: 6px; flex: 1; }
+
+  .cell {
+    flex: 1;
+    aspect-ratio: 1.4 / 1;
+    background: var(--cell-off);
+    border-radius: 3px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.08s, border-color 0.08s;
+  }
+
+  .cell:hover          { background: var(--cell-off-hover); }
+  .cell.on             { background: var(--cell-on); }
+  .cell.on:hover       { background: #c0c0c4; }
+  .cell.col-playing    { border-color: var(--accent); }
+  .cell.on.col-playing { background: #d0d0d4; border-color: transparent; }
+
+  .controls { display: flex; align-items: center; gap: 12px; }
+
+  .play-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.1s;
+    min-width: 80px;
+  }
+
+  .play-btn:hover   { border-color: var(--accent); background: var(--surface); }
+  .play-btn.playing { border-color: var(--accent); }
+
+  .status {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .status.error { color: #9a4a4a; }
+
+  #loading-notice {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 18px;
+    line-height: 1.8;
+  }
+
+  /* ── Log ── */
+  .log-section { margin-top: 20px; }
+
+  .log-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .log-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex: 1;
+  }
+
+  .log-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.1s;
+    white-space: nowrap;
+  }
+
+  .log-btn:hover  { border-color: var(--accent); color: var(--text); }
+  .log-btn.active { border-color: var(--accent); color: var(--text); background: var(--surface); }
+
+  .log-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    max-height: 180px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .log-panel::-webkit-scrollbar       { width: 4px; }
+  .log-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .log-panel.hidden { display: none; }
+
+  .log-empty {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .log-entry {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    line-height: 1.9;
+    display: flex;
+    gap: 10px;
+  }
+
+  .le-elapsed { color: var(--muted); flex-shrink: 0; min-width: 54px; }
+  .le-ts      { color: var(--muted); flex-shrink: 0; }
+  .le-col     { color: var(--muted); flex-shrink: 0; min-width: 44px; }
+  .le-file    { color: var(--text); }
+  .le-silent  { color: var(--muted); font-style: italic; }
 </style>
 </head>
 <body>
-<!-- ── Landing screen ── -->
-<div id="landing" class="screen active">
-  <p class="landing-eyebrow">Welcome to</p>
-  <h2 class="landing-title">Aarhus Beat Sequencer (ABS)</h2>
-  <div class="landing-body">
-    <p>
-      <span class="landing-label">Your job</span>
-      To have fun sequencing short rhythms into your own musical creations.
-    </p>
-    <p>
-      <span class="landing-label">How it works</span>
-      The sequencer is set up as a grid where each row of the grid corresponds to a different short rhythm. As the sequencer moves from left to right across the 4 columns, it will play whichever rhythm you have selected by clicking the corresponding square.
-    </p>
-    <p>
-      The rhythms are organized into 5 sets (on the left) with 5 rhythms (rows) per set. You can navigate between sets as the sequence plays but it won't switch between sets until it reaches the end (last column) of the current set.
-    </p>
-    <p>
-      Please explore all the different sets and create the sequences that you enjoy!
-    </p>
-    <p>
-      The <strong>'Get Started'</strong> button will take you to the sequencer. Then press play to start making sequences!
-    </p>
-  </div>
 
-  <!-- Showcase -->
-  <div class="showcase-intro">
-    <strong>Explore the sets</strong><br>
-    Before jumping in, feel free to listen to the available rhythms. Each set has 5 samples — you can play them one by one or listen to the whole set at once. Click a playing button again to stop it.
+<!-- ── Screen 1: Instructions ── -->
+<div id="instructions" class="screen active">
+  <div class="landing-wrap">
+    <p class="landing-eyebrow">Welcome to</p>
+    <h2 class="landing-title">Aarhus Beat Sequencer (ABS)</h2>
+    <div class="landing-body">
+      <p>
+        <span class="landing-label">Your job</span>
+        To have fun sequencing short rhythms into your own musical creations.
+      </p>
+      <p>
+        <span class="landing-label">How it works</span>
+        The sequencer is set up as a grid where each row of the grid corresponds to a different short rhythm. As the sequencer moves from left to right across the 4 columns, it will play whichever rhythm you have selected by clicking the corresponding square.
+      </p>
+      <p>
+        The rhythms are organized into 5 sets (on the left) with 5 rhythms (rows) per set. You can navigate between sets as the sequence plays but it won't switch between sets until it reaches the end (last column) of the current set.
+      </p>
+      <p>
+        Please explore all the different sets and create the sequences that you enjoy!
+      </p>
+      <p>
+        The <strong>'Get Started'</strong> button will take you to the sequencer. Then press play to start making sequences!
+      </p>
+    </div>
+    <div class="landing-actions">
+      <button class="nav-btn primary" id="to-showcase-btn">Explore sets first →</button>
+      <button class="nav-btn primary" id="instructions-to-seq-btn">Get Started</button>
+    </div>
   </div>
-  <div class="showcase-sets" id="showcase-sets">
-    <!-- injected by JS -->
-  </div>
-
-  <button class="get-started-btn" id="get-started-btn">Get Started</button>
 </div>
 
-<!-- ── Sequencer screen ── -->
+<!-- ── Screen 2: Showcase ── -->
+<div id="showcase" class="screen">
+  <div class="landing-wrap">
+    <p class="landing-eyebrow">Before you begin</p>
+    <h2 class="landing-title">Explore the Sets</h2>
+    <div class="showcase-intro">
+      Here are the 5 sets of rhythms available in the sequencer. You can listen to each set in full, or try individual samples one by one. Click a playing button again to stop it.
+    </div>
+    <div class="showcase-sets" id="showcase-sets">
+      <!-- injected by JS -->
+    </div>
+    <div class="landing-actions">
+      <button class="nav-btn" id="showcase-back-btn">← Back</button>
+      <button class="nav-btn primary" id="showcase-to-seq-btn">Get Started</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Screen 3: Sequencer ── -->
 <div id="sequencer" class="screen">
 <div class="app">
 
-  <!-- Left tab strip -->
   <nav class="set-tabs" id="set-tabs">
     <div class="tabs-label">set</div>
-    <!-- injected by JS -->
   </nav>
 
-  <!-- Main panel -->
   <div class="main">
     <header>
       <h1>Aarhus Beat Sequencer (ABS)</h1>
       <div class="step-toggle">
-        <!--<span class="step-label">steps</span>
+        <span class="step-label">steps</span>
         <button class="step-btn active" data-steps="4">4</button>
-        <button class="step-btn" data-steps="8">8</button> -->
+        <button class="step-btn" data-steps="8">8</button>
       </div>
     </header>
 
@@ -648,7 +594,6 @@
 
     <div id="loading-notice"></div>
 
-    <!-- Log panel -->
     <div class="log-section">
       <div class="log-toolbar">
         <span class="log-title">Log</span>
@@ -659,36 +604,27 @@
         <span class="log-empty">No entries yet — press Play to start logging.</span>
       </div>
     </div>
-
   </div>
 </div>
 </div>
 
 <script>
 // ─── Config ───────────────────────────────────────────────────────────────────
+const AUDIO_PATH      = 'audio/';
 const NUM_SETS        = 5;
 const NUM_ROWS        = 5;
-const SAMPLE_DURATION = 2.0;  // seconds — all samples are exactly 2s
-const SCHEDULE_AHEAD  = 0.1;  // look-ahead window in seconds
+const SAMPLE_DURATION = 2.0;
+const SCHEDULE_AHEAD  = 0.1;
 
-const AUDIO_PATH = 'audio/'; // folder where .wav files live (trailing slash, or '' for same dir)
-
-// SETS[s] = array of filenames for set s+1
 const SETS = Array.from({length: NUM_SETS}, (_, s) =>
   Array.from({length: NUM_ROWS}, (_, r) => `${AUDIO_PATH}${s + 1}_${r + 1}.wav`)
 );
 
 // ─── State ────────────────────────────────────────────────────────────────────
-let viewedSet  = 0;   // which tab the user is currently looking at
-let playingSet = 0;   // which set is currently sounding
-let queuedSet  = null; // set queued to play at next bar end (null = loop current)
+let viewedSet  = 0;
+let playingSet = 0;
 let numCols    = 4;
 
-// Shuffled playback order — reshuffled on button press
-let setPlayOrder = Array.from({length: NUM_SETS}, (_, i) => i);
-let setPlayIndex = 0;
-
-// Per-set grids
 let grids = Array.from({length: NUM_SETS}, () =>
   Array.from({length: NUM_ROWS}, () => new Array(numCols).fill(false))
 );
@@ -696,23 +632,25 @@ let grids = Array.from({length: NUM_SETS}, () =>
 let currentCol = -1;
 let isPlaying  = false;
 
-// Audio
 let audioCtx = null;
-let buffers  = {};  // 'N_M.wav' → AudioBuffer
+let buffers  = {};
 
-// Scheduler
-let scheduleTimer = null;
-let nextStepTime  = 0;
-let nextStepCol   = 0;
-let pendingVisual = [];  // [{col, time}]
+let scheduleTimer  = null;
+let nextStepTime   = 0;
+let nextStepCol    = 0;
+let nextPlayingSet = 0;
+let pendingVisual  = [];
 
-// ─── DOM refs (lazy — sequencer screen is hidden at parse time) ───────────────
+// ─── DOM refs (lazy — sequencer screen hidden at parse time) ──────────────────
 const setTabsEl     = () => document.getElementById('set-tabs');
 const gridEl        = () => document.getElementById('grid');
 const indicatorsEl  = () => document.getElementById('col-indicators');
 const playBtn       = () => document.getElementById('play-btn');
 const statusEl      = () => document.getElementById('status');
 const loadingNotice = () => document.getElementById('loading-notice');
+const logPanel      = () => document.getElementById('log-panel');
+const logToggleBtn  = () => document.getElementById('log-toggle-btn');
+const logDownloadBtn= () => document.getElementById('log-download-btn');
 
 // ─── Set tabs ─────────────────────────────────────────────────────────────────
 function buildSetTabs() {
@@ -724,26 +662,15 @@ function buildSetTabs() {
     btn.innerHTML =
       `<span class="tab-num">${s + 1}</span>` +
       `<div class="tab-dots">${'<span class="tab-dot"></span>'.repeat(numCols)}</div>` +
-      `<span class="dot"></span>` +
-      `<button class="queue-btn" data-set="${s}" title="Queue this set">next</button>`;
+      `<span class="dot"></span>`;
     btn.title = `Set ${s + 1}`;
-    btn.addEventListener('click', (e) => {
-      // Don't trigger tab view switch when clicking queue button
-      if (e.target.classList.contains('queue-btn')) return;
-      switchViewedSet(s);
-    });
-    // Queue button handler — stop propagation so it doesn't trigger tab click
-    btn.querySelector('.queue-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      queueSet(s);
-    });
+    btn.addEventListener('click', () => switchViewedSet(s));
     setTabsEl().appendChild(btn);
   }
   refreshTabClasses();
 }
 
 function refreshTabDots() {
-  // Rebuild dot count if numCols changed
   setTabsEl().querySelectorAll('.set-tab').forEach(tab => {
     const dotsEl = tab.querySelector('.tab-dots');
     if (dotsEl) dotsEl.innerHTML = '<span class="tab-dot"></span>'.repeat(numCols);
@@ -754,9 +681,6 @@ function refreshTabClasses() {
   setTabsEl().querySelectorAll('.set-tab').forEach((tab, i) => {
     tab.classList.toggle('viewed',      i === viewedSet);
     tab.classList.toggle('playing-tab', i === playingSet && isPlaying);
-    tab.classList.toggle('queued-tab',  i === queuedSet);
-    const qBtn = tab.querySelector('.queue-btn');
-    if (qBtn) qBtn.classList.toggle('queued', i === queuedSet);
   });
 }
 
@@ -767,31 +691,23 @@ function updateTabDot(s, state) {
   if (state) tab.classList.add(state);
 }
 
-// Update bar-progress dots on the playing tab
 function updateBarDots(playingS, col) {
   setTabsEl().querySelectorAll('.set-tab').forEach((tab, i) => {
     const dots = tab.querySelectorAll('.tab-dot');
     dots.forEach((d, di) => {
       d.classList.remove('beat-on', 'beat-past');
       if (i === playingS) {
-        if (di === col)   d.classList.add('beat-on');
+        if (di === col)    d.classList.add('beat-on');
         else if (di < col) d.classList.add('beat-past');
       }
     });
   });
 }
 
-// Switch which set's grid is shown — playback unaffected until bar end
 function switchViewedSet(s) {
   viewedSet = s;
   refreshTabClasses();
   renderGrid();
-}
-
-// Queue a set to play at the next bar boundary (press again to cancel)
-function queueSet(s) {
-  queuedSet = (queuedSet === s) ? null : s;
-  refreshTabClasses();
 }
 
 // ─── Grid ─────────────────────────────────────────────────────────────────────
@@ -810,7 +726,7 @@ function renderGrid() {
   indicatorsEl().innerHTML = '';
   for (let c = 0; c < numCols; c++) {
     const d = document.createElement('div');
-    d.className = 'col-indicator' + (c === currentCol ? ' active-col' : '');
+    d.className = 'col-indicator' + (c === currentCol && viewedSet === playingSet ? ' active-col' : '');
     d.dataset.col = c;
     indicatorsEl().appendChild(d);
   }
@@ -830,8 +746,8 @@ function renderGrid() {
     for (let c = 0; c < numCols; c++) {
       const cell = document.createElement('div');
       cell.className = 'cell'
-        + (g[r][c]                                          ? ' on'          : '')
-        + (c === currentCol && viewedSet === playingSet     ? ' col-playing' : '');
+        + (g[r][c] ? ' on' : '')
+        + (c === currentCol && viewedSet === playingSet ? ' col-playing' : '');
       cell.dataset.row = r;
       cell.dataset.col = c;
       cell.addEventListener('click', onCellClick);
@@ -866,26 +782,28 @@ function onCellClick(e) {
 }
 
 // ─── Step toggle ──────────────────────────────────────────────────────────────
-document.querySelectorAll('.step-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const n = parseInt(btn.dataset.steps);
-    if (n === numCols) return;
-    if (isPlaying) stop();
-    numCols = n;
-    document.querySelectorAll('.step-btn').forEach(b =>
-      b.classList.toggle('active', b === btn));
-    resizeAllGrids(n);
-    currentCol = -1;
-    refreshTabDots();
-    renderGrid();
+function initStepToggle() {
+  document.querySelectorAll('.step-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const n = parseInt(btn.dataset.steps);
+      if (n === numCols) return;
+      if (isPlaying) stop();
+      numCols = n;
+      document.querySelectorAll('.step-btn').forEach(b =>
+        b.classList.toggle('active', b === btn));
+      resizeAllGrids(n);
+      currentCol = -1;
+      refreshTabDots();
+      renderGrid();
+    });
   });
-});
+}
 
 // ─── Status ───────────────────────────────────────────────────────────────────
 function updateStatus() {
   if (isPlaying) return;
-  const files    = SETS[viewedSet];
-  const nLoaded  = files.filter(f => buffers[f]).length;
+  const files   = SETS[viewedSet];
+  const nLoaded = files.filter(f => buffers[f]).length;
   if (nLoaded === files.length) {
     statusEl().textContent = 'ready';
     statusEl().classList.remove('error');
@@ -898,61 +816,12 @@ function updateStatus() {
   }
 }
 
-// ─── Audio loading ────────────────────────────────────────────────────────────
-async function loadAllSamples() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-  loadingNotice().textContent = 'Loading samples…';
-  statusEl().textContent = 'loading…';
-  statusEl().classList.remove('error');
-
-  const allFiles = SETS.flat();
-  let totalLoaded = 0, totalFailed = 0;
-
-  await Promise.all(allFiles.map(async file => {
-    try {
-      const res = await fetch(file);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const ab = await res.arrayBuffer();
-      buffers[file] = await audioCtx.decodeAudioData(ab);
-      totalLoaded++;
-    } catch(e) {
-      totalFailed++;
-      console.warn('Could not load', file, e);
-    }
-  }));
-
-  // Update tab dots
-  for (let s = 0; s < NUM_SETS; s++) {
-    const n = SETS[s].filter(f => buffers[f]).length;
-    updateTabDot(s, n === SETS[s].length ? 'loaded' : n === 0 ? 'error' : 'loaded');
-  }
-
-  if (totalFailed === allFiles.length) {
-    loadingNotice().innerHTML =
-      `<span style="color:#9a4a4a">No samples loaded — is this running on a local server?<br>` +
-      `Run <code>start.sh</code> / <code>start.bat</code>, or:<br>` +
-      `<code>python3 -m http.server 8080</code></span>`;
-  } else if (totalFailed > 0) {
-    loadingNotice().textContent = `${totalLoaded}/${allFiles.length} samples loaded.`;
-  } else {
-    loadingNotice().textContent = `${totalLoaded} samples loaded. Ready.`;
-  }
-
-  updateStatus();
-}
-
 // ─── Logging ──────────────────────────────────────────────────────────────────
 let logEntries     = [];
 let prevLogEntries = [];
 let logVisible     = true;
 let playStartTs    = null;
 let playStartCtx   = null;
-
-// Resolved lazily — elements are hidden (in sequencer screen) at script parse time
-const logPanel       = () => document.getElementById('log-panel');
-const logToggleBtn   = () => document.getElementById('log-toggle-btn');
-const logDownloadBtn = () => document.getElementById('log-download-btn');
 
 function appendLogRow(elapsed, ts, set, col, files) {
   const panel = logPanel();
@@ -1005,13 +874,12 @@ function downloadLog(entries) {
   const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href     = url;
+  a.href = url;
   a.download = `sequencer-log-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
-// Wire up log buttons after screen switch (deferred so elements exist)
 function initLogButtons() {
   logToggleBtn().addEventListener('click', () => {
     logVisible = !logVisible;
@@ -1024,21 +892,7 @@ function initLogButtons() {
     downloadLog(logEntries.length ? logEntries : prevLogEntries));
 }
 
-// ─── Shuffle ──────────────────────────────────────────────────────────────────
-function shuffle(arr) {
-  // Fisher-Yates in-place
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-// ─── Scheduler (Web Audio look-ahead) ────────────────────────────────────────
-// nextPlayingSet tracks which set will play for the *currently being scheduled* bar.
-// At each bar boundary we snapshot viewedSet — whatever the user is looking at wins.
-let nextPlayingSet = 0;
-
+// ─── Scheduler ────────────────────────────────────────────────────────────────
 function scheduleAhead() {
   const until = audioCtx.currentTime + SCHEDULE_AHEAD;
 
@@ -1067,14 +921,9 @@ function scheduleAhead() {
     nextStepTime += SAMPLE_DURATION;
     nextStepCol   = (nextStepCol + 1) % numCols;
 
-    // At the end of the bar, switch to queued set if one is set, else loop current
+    // At bar end: switch to whatever set the user is currently viewing
     if (nextStepCol === 0) {
-      if (queuedSet !== null) {
-        nextPlayingSet = queuedSet;
-        queuedSet = null;
-      } else {
-        nextPlayingSet = playingSet; // loop current set
-      }
+      nextPlayingSet = viewedSet;
     }
   }
 
@@ -1088,17 +937,15 @@ function visualLoop() {
     const entry = pendingVisual.shift();
     currentCol = entry.col;
 
-    // Update playingSet and refresh tabs if it changed
     if (entry.scheduledSet !== playingSet) {
       playingSet = entry.scheduledSet;
-      refreshTabClasses(); // also clears queued-tab once consumed
+      refreshTabClasses();
       if (viewedSet === playingSet) renderGrid();
     }
 
     setColHighlight(currentCol);
     updateBarDots(playingSet, currentCol);
 
-    // Log
     const elapsedSec = entry.time - playStartCtx;
     const mm  = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
     const ss  = String(Math.floor(elapsedSec % 60)).padStart(2, '0');
@@ -1114,7 +961,6 @@ function visualLoop() {
 
 // ─── Play / Stop ──────────────────────────────────────────────────────────────
 async function start() {
-  if (!audioCtx) await loadAllSamples();
   if (audioCtx.state === 'suspended') await audioCtx.resume();
 
   isPlaying = true;
@@ -1127,8 +973,7 @@ async function start() {
   nextStepCol    = 0;
   nextStepTime   = audioCtx.currentTime + 0.05;
   nextPlayingSet = viewedSet;
-
-  playingSet = viewedSet;
+  playingSet     = viewedSet;
   refreshTabClasses();
 
   playStartCtx = nextStepTime;
@@ -1152,16 +997,13 @@ function stop() {
   playBtn().classList.remove('playing');
   setColHighlight(-1);
   updateBarDots(-1, -1);
-  queuedSet = null;
   refreshTabClasses();
   updateStatus();
   resetLog();
 }
 
-// ─── Showcase (landing page preview) ─────────────────────────────────────────
-// Tracks currently playing preview source nodes: { key: AudioBufferSourceNode }
-// key is 'set-N' for whole set (loops all 5) or 'N-R' for single sample
-let scPlaying = {};  // key → { sources: [AudioBufferSourceNode], stopFn }
+// ─── Showcase ─────────────────────────────────────────────────────────────────
+let scPlaying = {};
 
 function scStop(key) {
   if (scPlaying[key]) {
@@ -1179,7 +1021,6 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
   const file = SETS[setIdx][rowIdx];
   if (!buffers[file]) return;
 
-  // Toggle off if already playing
   if (scPlaying[key]) {
     scStop(key);
     btnEl.textContent = file.replace(AUDIO_PATH, '');
@@ -1187,20 +1028,17 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
     return;
   }
 
- /* 
-  // Stop any other single-sample in this set playing (optional: allow overlap)
-  // Stop whole-set preview for this set if running
   scStop(`set-${setIdx}`);
   document.querySelectorAll(`.sc-btn[data-set="${setIdx}"]`)
     .forEach(b => { b.textContent = '▶ play set'; b.classList.remove('playing'); });
-*/
+
   const src = audioCtx.createBufferSource();
   src.buffer = buffers[file];
   src.loop   = true;
   src.connect(audioCtx.destination);
   src.start();
 
-  scPlaying[key] = { sources: [src], stopFn: () => src.stop() };
+  scPlaying[key] = { sources: [src] };
   btnEl.textContent = '■ ' + file.replace(AUDIO_PATH, '');
   btnEl.classList.add('playing');
 
@@ -1216,15 +1054,13 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
 function scPlaySet(setIdx, btnEl) {
   const key = `set-${setIdx}`;
 
-  // Toggle off
   if (scPlaying[key]) {
     scStop(key);
-    btnEl.textContent = ''; //'▶ play set';
+    btnEl.textContent = '▶ play set';
     btnEl.classList.remove('playing');
     return;
   }
 
-  // Stop any individual sample previews for this set
   for (let r = 0; r < NUM_ROWS; r++) {
     const sk = `${setIdx}-${r}`;
     if (scPlaying[sk]) {
@@ -1234,11 +1070,10 @@ function scPlaySet(setIdx, btnEl) {
     }
   }
 
-  // Start all 5 samples looping in sync
   if (audioCtx.state === 'suspended') audioCtx.resume();
   const sources = [];
   const startAt = audioCtx.currentTime + 0.05;
-  SETS[setIdx].forEach((file, r) => {
+  SETS[setIdx].forEach(file => {
     if (!buffers[file]) return;
     const src = audioCtx.createBufferSource();
     src.buffer = buffers[file];
@@ -1262,7 +1097,6 @@ function buildShowcase() {
     const setEl = document.createElement('div');
     setEl.className = 'showcase-set';
 
-    // Header row: label + play-set button
     const header = document.createElement('div');
     header.className = 'showcase-set-header';
 
@@ -1273,14 +1107,13 @@ function buildShowcase() {
     const playSetBtn = document.createElement('button');
     playSetBtn.className = 'sc-btn';
     playSetBtn.dataset.set = s;
-    playSetBtn.textContent = ''; // '▶ play set';
+    playSetBtn.textContent = '▶ play set';
     playSetBtn.addEventListener('click', () => scPlaySet(s, playSetBtn));
 
     header.appendChild(label);
     header.appendChild(playSetBtn);
     setEl.appendChild(header);
 
-    // Sample rows
     const samplesEl = document.createElement('div');
     samplesEl.className = 'showcase-samples';
 
@@ -1296,7 +1129,9 @@ function buildShowcase() {
       sampleBtn.className = 'sc-sample-btn';
       sampleBtn.dataset.set = s;
       sampleBtn.dataset.row = r;
-      sampleBtn.textContent = buffers[file] ? file.replace(AUDIO_PATH, '') : file.replace(AUDIO_PATH, '') + ' (loading…)';
+      sampleBtn.textContent = buffers[file]
+        ? file.replace(AUDIO_PATH, '')
+        : file.replace(AUDIO_PATH, '') + ' (loading…)';
       sampleBtn.addEventListener('click', () => {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         scPlaySample(s, r, sampleBtn);
@@ -1313,46 +1148,54 @@ function buildShowcase() {
 }
 
 // ─── Screen switching ─────────────────────────────────────────────────────────
-document.getElementById('get-started-btn').addEventListener('click', () => {
-  scStopAll();
-  document.getElementById('landing').classList.remove('active');
-  document.getElementById('sequencer').classList.add('active');
-  buildSetTabs();
-  renderGrid();
-  // Samples already loaded on page init — just update the notice
-  const allFiles = SETS.flat();
-  const loaded   = allFiles.filter(f => buffers[f]).length;
-  const notice   = loadingNotice();
-  if (notice) {
-    if (loaded === allFiles.length) {
-      notice.textContent = `${loaded} samples loaded. Ready.`;
-    } else if (loaded === 0) {
-      notice.innerHTML = `<span style="color:#9a4a4a">No samples loaded. Make sure you're running via a local server.</span>`;
-    } else {
-      notice.textContent = `${loaded}/${allFiles.length} samples loaded.`;
-    }
-  }
-  // Update tab dots
-  for (let s = 0; s < NUM_SETS; s++) {
-    const n = SETS[s].filter(f => buffers[f]).length;
-    updateTabDot(s, n === SETS[s].length ? 'loaded' : n === 0 ? 'error' : 'loaded');
-  }
-  updateStatus();
-  playBtn().addEventListener('click', () => isPlaying ? stop() : start());
-  initLogButtons();
-});
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
-// Load samples on page load so showcase is ready immediately
+let sequencerInited = false;
+function enterSequencer() {
+  scStopAll();
+  showScreen('sequencer');
+  if (!sequencerInited) {
+    sequencerInited = true;
+    buildSetTabs();
+    renderGrid();
+    initStepToggle();
+    playBtn().addEventListener('click', () => isPlaying ? stop() : start());
+    initLogButtons();
+    // Update loading notice and tab dots
+    const allFiles = SETS.flat();
+    const loaded   = allFiles.filter(f => buffers[f]).length;
+    const notice   = loadingNotice();
+    if (notice) {
+      notice.textContent = loaded === allFiles.length
+        ? `${loaded} samples loaded. Ready.`
+        : loaded === 0
+        ? 'No samples loaded. Make sure you\'re running via a local server.'
+        : `${loaded}/${allFiles.length} samples loaded.`;
+    }
+    for (let s = 0; s < NUM_SETS; s++) {
+      const n = SETS[s].filter(f => buffers[f]).length;
+      updateTabDot(s, n === SETS[s].length ? 'loaded' : n === 0 ? 'error' : 'loaded');
+    }
+    updateStatus();
+  }
+}
+
+document.getElementById('to-showcase-btn').addEventListener('click', () => showScreen('showcase'));
+document.getElementById('instructions-to-seq-btn').addEventListener('click', enterSequencer);
+document.getElementById('showcase-back-btn').addEventListener('click', () => showScreen('instructions'));
+document.getElementById('showcase-to-seq-btn').addEventListener('click', enterSequencer);
+
+// ─── Init: load samples immediately so showcase is ready ──────────────────────
 (async () => {
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const allFiles = SETS.flat();
-  await Promise.all(allFiles.map(async file => {
+  await Promise.all(SETS.flat().map(async file => {
     try {
       const res = await fetch(file);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const ab = await res.arrayBuffer();
-      buffers[file] = await audioCtx.decodeAudioData(ab);
+      buffers[file] = await audioCtx.decodeAudioData(await res.arrayBuffer());
     } catch(e) {
       console.warn('Could not load', file, e);
     }
