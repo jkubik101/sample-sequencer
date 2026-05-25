@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Aarhus Beat Sequencer</title>
+<title>Aarhus Improvisational Rhythm Sequencer</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
 <style>
@@ -519,21 +519,19 @@
 <div id="instructions" class="screen active">
   <div class="landing-wrap">
     <p class="landing-eyebrow">Welcome to</p>
-    <h2 class="landing-title">Aarhus Beat Sequencer (ABS)</h2>
+    <h2 class="landing-title">Aarhus Improvisational Rhythm Sequencer (AIRS)</h2>
     <div class="landing-body">
       <p>
         <span class="landing-label">Your job</span>
-        To have fun sequencing short rhythms into your own musical creations.
+        Combine short rhythms into longer sequences in an improvisational way.
+        Don't worry about a final product, just have fun generating sequences that you enjoy in the moment!
       </p>
       <p>
         <span class="landing-label">How it works</span>
         The sequencer is set up as a grid where each row of the grid corresponds to a different short rhythm. As the sequencer moves from left to right across the 4 columns, it will play whichever rhythm you have selected by clicking the corresponding square.
       </p>
       <p>
-        The rhythms are organized into 5 sets (on the left) with 5 rhythms (rows) per set. You can navigate between sets as the sequence plays but it won't switch between sets until it reaches the end (last column) of the current set.
-      </p>
-      <p>
-        Please explore all the different sets and create the sequences that you enjoy!
+        The rhythms are organized into 3 sets (on the left) with 7 rhythms (rows) per set. You can navigate between sets as the sequence plays but it won't switch between sets until it reaches the end (last column) of the current set.
       </p>
       <p>
         The <strong>'Get Started'</strong> button will take you to the sequencer. Then press play to start making sequences!
@@ -574,7 +572,7 @@
 
   <div class="main">
     <header>
-      <h1>Aarhus Beat Sequencer (ABS)</h1>
+      <h1>Aarhus Improvisational Rhythm Sequencer (AIRS)</h1>
       <div class="step-toggle">
         <span class="step-label">steps</span>
         <button class="step-btn active" data-steps="4">4</button>
@@ -611,14 +609,19 @@
 <script>
 // ─── Config ───────────────────────────────────────────────────────────────────
 const AUDIO_PATH      = 'audio/';
-const NUM_SETS        = 5;
-const NUM_ROWS        = 5;
+const NUM_SETS        = 3;
+const NUM_ROWS        = 7;
 const SAMPLE_DURATION = 2.0;
 const SCHEDULE_AHEAD  = 0.1;
 
-const SETS = Array.from({length: NUM_SETS}, (_, s) =>
-  Array.from({length: NUM_ROWS}, (_, r) => `${AUDIO_PATH}${s + 1}_${r + 1}.wav`)
-);
+const SETS = [
+  // Set 1
+  ['1_1','1_2','1_3','1_4','2_1','2_4','2_3'].map(f => `${AUDIO_PATH}${f}.wav`),
+  // Set 2
+  ['3_1','3_3','3_2','3_4','4_1','3_5','4_3'].map(f => `${AUDIO_PATH}${f}.wav`),
+  // Set 3
+  ['4_2','5_3','5_1','4_5','5_2','5_4','5_5'].map(f => `${AUDIO_PATH}${f}.wav`),
+];
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let viewedSet  = 0;
