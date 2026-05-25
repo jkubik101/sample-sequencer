@@ -203,6 +203,25 @@
 
   .sc-sample-btn:hover   { border-color: var(--accent); color: var(--text); }
   .sc-sample-btn.playing { border-color: #c0c0c4; color: #e0e0e2; background: #2e2e31; }
+  .sc-sample-btn.heard   { color: #5a8a5a; border-color: #3a5a3a; }
+
+  /* heard set card */
+  .showcase-set.heard {
+    border-color: #3a5a3a;
+    background: #1e2a1e;
+  }
+
+  .showcase-set.heard .showcase-set-label::after {
+    content: ' ✓';
+    color: #5a8a5a;
+  }
+
+  /* locked Get Started button */
+  .nav-btn.primary:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: var(--border);
+  }
 
   /* ── Sequencer app layout ── */
   #sequencer { flex-direction: column; align-items: center; }
@@ -550,14 +569,14 @@
     <p class="landing-eyebrow">Before you begin</p>
     <h2 class="landing-title">Explore the Sets</h2>
     <div class="showcase-intro">
-      Here are the 5 sets of rhythms available in the sequencer. You can listen to each set in full, or try individual samples one by one. Click a playing button again to stop it.
+      Please listen to all the rhythms before proceeding — you must hear every sample in each set before you can get started. You can listen to a full set in sequence, or explore individual samples one by one. A set will be marked as heard once all its rhythms have been played through to completion.
     </div>
     <div class="showcase-sets" id="showcase-sets">
       <!-- injected by JS -->
     </div>
     <div class="landing-actions">
       <button class="nav-btn" id="showcase-back-btn">← Back</button>
-      <button class="nav-btn primary" id="showcase-to-seq-btn">Get Started</button>
+      <button class="nav-btn primary" id="showcase-to-seq-btn" disabled>Get Started</button>
     </div>
   </div>
 </div>
@@ -1008,6 +1027,37 @@ function stop() {
 // ─── Showcase ─────────────────────────────────────────────────────────────────
 let scPlaying = {};
 
+// heardSamples[s][r] = true once sample s,r has played to completion
+const heardSamples = Array.from({length: NUM_SETS}, () => new Array(NUM_ROWS).fill(false));
+
+function checkSetHeard(setIdx) {
+  return heardSamples[setIdx].every(Boolean);
+}
+
+function checkAllHeard() {
+  return Array.from({length: NUM_SETS}, (_, s) => checkSetHeard(s)).every(Boolean);
+}
+
+function markSampleHeard(setIdx, rowIdx) {
+  heardSamples[setIdx][rowIdx] = true;
+
+  // Mark sample button as heard
+  const sb = document.querySelector(`.sc-sample-btn[data-set="${setIdx}"][data-row="${rowIdx}"]`);
+  if (sb) sb.classList.add('heard');
+
+  // If whole set now heard, highlight the card
+  if (checkSetHeard(setIdx)) {
+    const card = document.querySelector(`.showcase-set[data-set="${setIdx}"]`);
+    if (card) card.classList.add('heard');
+  }
+
+  // Unlock Get Started if all sets heard
+  if (checkAllHeard()) {
+    const btn = document.getElementById('showcase-to-seq-btn');
+    if (btn) btn.disabled = false;
+  }
+}
+
 function scStop(key) {
   if (scPlaying[key]) {
     scPlaying[key].sources.forEach(s => { try { s.stop(); } catch(e) {} });
@@ -1024,6 +1074,7 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
   const file = SETS[setIdx][rowIdx];
   if (!buffers[file]) return;
 
+  // Toggle off — stopping early does NOT count as heard
   if (scPlaying[key]) {
     scStop(key);
     btnEl.textContent = file.replace(AUDIO_PATH, '');
@@ -1031,13 +1082,14 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
     return;
   }
 
+  // Stop whole-set playback for this set if running
   scStop(`set-${setIdx}`);
   document.querySelectorAll(`.sc-btn[data-set="${setIdx}"]`)
     .forEach(b => { b.textContent = '▶ play set'; b.classList.remove('playing'); });
 
   const src = audioCtx.createBufferSource();
   src.buffer = buffers[file];
-  src.loop   = true;
+  src.loop   = false;  // play once — completion triggers heard
   src.connect(audioCtx.destination);
   src.start();
 
@@ -1046,24 +1098,88 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
   btnEl.classList.add('playing');
 
   src.onended = () => {
+    // Only counts if it wasn't manually stopped
     if (scPlaying[key]) {
       delete scPlaying[key];
       btnEl.textContent = file.replace(AUDIO_PATH, '');
       btnEl.classList.remove('playing');
+      markSampleHeard(setIdx, rowIdx);
     }
+  };
+}
+
+// Play samples in the set one after another
+function scPlaySetSequential(setIdx, btnEl, rowIdx = 0) {
+  const key = `set-${setIdx}`;
+
+  // If cancelled (key gone), stop the chain
+  if (!scPlaying[key]) return;
+
+  // All samples done — set complete
+  if (rowIdx >= NUM_ROWS) {
+    delete scPlaying[key];
+    btnEl.textContent = '▶ play set';
+    btnEl.classList.remove('playing');
+    return;
+  }
+
+  const file = SETS[setIdx][rowIdx];
+  const sampleBtn = document.querySelector(`.sc-sample-btn[data-set="${setIdx}"][data-row="${rowIdx}"]`);
+
+  // Clear previous sample btn highlight
+  if (rowIdx > 0) {
+    const prev = document.querySelector(`.sc-sample-btn[data-set="${setIdx}"][data-row="${rowIdx - 1}"]`);
+    if (prev) prev.classList.remove('playing');
+  }
+
+  if (!buffers[file]) {
+    // Skip missing buffers
+    scPlaySetSequential(setIdx, btnEl, rowIdx + 1);
+    return;
+  }
+
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffers[file];
+  src.loop   = false;
+  src.connect(audioCtx.destination);
+  src.start();
+
+  scPlaying[key].sources = [src];
+
+  if (sampleBtn) {
+    sampleBtn.textContent = '■ ' + file.replace(AUDIO_PATH, '');
+    sampleBtn.classList.add('playing');
+  }
+
+  src.onended = () => {
+    if (!scPlaying[key]) return; // was stopped early — don't mark heard
+    if (sampleBtn) {
+      sampleBtn.textContent = file.replace(AUDIO_PATH, '');
+      sampleBtn.classList.remove('playing');
+    }
+    markSampleHeard(setIdx, rowIdx);
+    scPlaySetSequential(setIdx, btnEl, rowIdx + 1);
   };
 }
 
 function scPlaySet(setIdx, btnEl) {
   const key = `set-${setIdx}`;
 
+  // Toggle off — stop the chain, don't mark remaining as heard
   if (scPlaying[key]) {
-    scStop(key);
+    scPlaying[key].sources.forEach(s => { try { s.stop(); } catch(e) {} });
+    delete scPlaying[key];
     btnEl.textContent = '▶ play set';
     btnEl.classList.remove('playing');
+    // Clear any playing highlights on sample buttons
+    for (let r = 0; r < NUM_ROWS; r++) {
+      const sb = document.querySelector(`.sc-sample-btn[data-set="${setIdx}"][data-row="${r}"]`);
+      if (sb) { sb.textContent = SETS[setIdx][r].replace(AUDIO_PATH, ''); sb.classList.remove('playing'); }
+    }
     return;
   }
 
+  // Stop any individual sample previews for this set
   for (let r = 0; r < NUM_ROWS; r++) {
     const sk = `${setIdx}-${r}`;
     if (scPlaying[sk]) {
@@ -1074,21 +1190,11 @@ function scPlaySet(setIdx, btnEl) {
   }
 
   if (audioCtx.state === 'suspended') audioCtx.resume();
-  const sources = [];
-  const startAt = audioCtx.currentTime + 0.05;
-  SETS[setIdx].forEach(file => {
-    if (!buffers[file]) return;
-    const src = audioCtx.createBufferSource();
-    src.buffer = buffers[file];
-    src.loop   = true;
-    src.connect(audioCtx.destination);
-    src.start(startAt);
-    sources.push(src);
-  });
-
-  scPlaying[key] = { sources };
+  scPlaying[key] = { sources: [] };
   btnEl.textContent = '■ stop set';
   btnEl.classList.add('playing');
+
+  scPlaySetSequential(setIdx, btnEl, 0);
 }
 
 function buildShowcase() {
@@ -1099,6 +1205,7 @@ function buildShowcase() {
   for (let s = 0; s < NUM_SETS; s++) {
     const setEl = document.createElement('div');
     setEl.className = 'showcase-set';
+    setEl.dataset.set = s;
 
     const header = document.createElement('div');
     header.className = 'showcase-set-header';
@@ -1129,7 +1236,7 @@ function buildShowcase() {
       rowLabel.textContent = String(r + 1).padStart(2, '0');
 
       const sampleBtn = document.createElement('button');
-      sampleBtn.className = 'sc-sample-btn';
+      sampleBtn.className = 'sc-sample-btn' + (heardSamples[s][r] ? ' heard' : '');
       sampleBtn.dataset.set = s;
       sampleBtn.dataset.row = r;
       sampleBtn.textContent = buffers[file]
