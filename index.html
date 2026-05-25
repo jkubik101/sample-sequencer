@@ -253,6 +253,40 @@
     text-align: center;
   }
 
+  /* wrapper: [queue-btn] [set-tab] */
+  .tab-row {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  /* queue button — left of the tab */
+  .queue-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 3px;
+    width: 22px;
+    cursor: pointer;
+    transition: all 0.12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0;
+  }
+
+  .queue-btn:hover { border-color: var(--accent); color: var(--text); background: var(--surface); }
+
+  /* queued state — amber, reads as "pending" */
+  .queue-btn.queued {
+    border-color: #8a7a4a;
+    color: #c4aa60;
+    background: #2a2618;
+  }
+
   .set-tab {
     font-family: 'DM Mono', monospace;
     font-size: 0.72rem;
@@ -286,6 +320,13 @@
     border-width: 2px;
     color: #e0e0e2;
     background: #333336;
+  }
+
+  /* queued — amber, up next */
+  .set-tab.queued-tab {
+    border-color: #8a7a4a;
+    border-style: dashed;
+    color: #c4aa60;
   }
 
   .tab-num { line-height: 1; }
@@ -645,6 +686,7 @@ const SETS = [
 // ─── State ────────────────────────────────────────────────────────────────────
 let viewedSet  = 0;
 let playingSet = 0;
+let queuedSet  = null; // set queued to play at next bar end, null = loop current
 let numCols    = 4;
 
 let grids = Array.from({length: NUM_SETS}, () =>
@@ -676,18 +718,30 @@ const logDownloadBtn= () => document.getElementById('log-download-btn');
 
 // ─── Set tabs ─────────────────────────────────────────────────────────────────
 function buildSetTabs() {
-  setTabsEl().querySelectorAll('.set-tab').forEach(el => el.remove());
+  setTabsEl().querySelectorAll('.tab-row').forEach(el => el.remove());
   for (let s = 0; s < NUM_SETS; s++) {
-    const btn = document.createElement('button');
-    btn.className = 'set-tab';
-    btn.dataset.set = s;
-    btn.innerHTML =
+    const rowEl = document.createElement('div');
+    rowEl.className = 'tab-row';
+
+    const qBtn = document.createElement('button');
+    qBtn.className = 'queue-btn';
+    qBtn.title = `Queue set ${s + 1} to play next`;
+    qBtn.textContent = '▶';
+    qBtn.addEventListener('click', () => queueSet(s));
+
+    const tab = document.createElement('button');
+    tab.className = 'set-tab';
+    tab.dataset.set = s;
+    tab.innerHTML =
       `<span class="tab-num">${s + 1}</span>` +
       `<div class="tab-dots">${'<span class="tab-dot"></span>'.repeat(numCols)}</div>` +
       `<span class="dot"></span>`;
-    btn.title = `Set ${s + 1}`;
-    btn.addEventListener('click', () => switchViewedSet(s));
-    setTabsEl().appendChild(btn);
+    tab.title = `Set ${s + 1}`;
+    tab.addEventListener('click', () => switchViewedSet(s));
+
+    rowEl.appendChild(qBtn);
+    rowEl.appendChild(tab);
+    setTabsEl().appendChild(rowEl);
   }
   refreshTabClasses();
 }
@@ -700,10 +754,21 @@ function refreshTabDots() {
 }
 
 function refreshTabClasses() {
-  setTabsEl().querySelectorAll('.set-tab').forEach((tab, i) => {
-    tab.classList.toggle('viewed',      i === viewedSet);
-    tab.classList.toggle('playing-tab', i === playingSet && isPlaying);
+  setTabsEl().querySelectorAll('.tab-row').forEach((row, i) => {
+    const tab  = row.querySelector('.set-tab');
+    const qBtn = row.querySelector('.queue-btn');
+    if (tab) {
+      tab.classList.toggle('viewed',      i === viewedSet);
+      tab.classList.toggle('playing-tab', i === playingSet && isPlaying);
+      tab.classList.toggle('queued-tab',  i === queuedSet);
+    }
+    if (qBtn) qBtn.classList.toggle('queued', i === queuedSet);
   });
+}
+
+function queueSet(s) {
+  queuedSet = (queuedSet === s) ? null : s;
+  refreshTabClasses();
 }
 
 function updateTabDot(s, state) {
@@ -943,9 +1008,14 @@ function scheduleAhead() {
     nextStepTime += SAMPLE_DURATION;
     nextStepCol   = (nextStepCol + 1) % numCols;
 
-    // At bar end: switch to whatever set the user is currently viewing
+    // At bar end: switch to queued set if one exists, else loop current
     if (nextStepCol === 0) {
-      nextPlayingSet = viewedSet;
+      if (queuedSet !== null) {
+        nextPlayingSet = queuedSet;
+        queuedSet = null;
+      } else {
+        nextPlayingSet = playingSet;
+      }
     }
   }
 
@@ -1019,6 +1089,7 @@ function stop() {
   playBtn().classList.remove('playing');
   setColHighlight(-1);
   updateBarDots(-1, -1);
+  queuedSet = null;
   refreshTabClasses();
   updateStatus();
   resetLog();
