@@ -731,6 +731,29 @@
 </div>
 </div>
 
+<!-- ── Help modal ── -->
+<div id="help-modal" class="modal-overlay" hidden>
+  <div class="modal-box">
+    <button class="modal-close" id="help-close">✕</button>
+    <p class="landing-eyebrow" style="margin-bottom:10px">Instructions</p>
+    <h2 class="modal-title">Aarhus Improvisational Rhythm Sequencer (AIRS)</h2>
+    <div class="landing-body">
+      <p>
+        <span class="landing-label">Your job</span>
+        Combine short rhythms into longer sequences in an improvisational way.
+        Don't worry about a final product, just have fun generating sequences that you enjoy in the moment!
+      </p>
+      <p>
+        <span class="landing-label">How it works</span>
+        The sequencer is set up as a grid where each row corresponds to a different short rhythm. As the sequencer moves left to right across the 4 columns, it plays whichever rhythm you have selected by clicking the corresponding square.
+      </p>
+      <p>
+        The rhythms are organized into 3 sets (on the left) with 7 rhythms (rows) per set. Use the <strong>▶</strong> button next to a set to queue it — it will switch at the end of the current bar.
+      </p>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── Config ───────────────────────────────────────────────────────────────────
 const AUDIO_PATH      = 'audio/';
@@ -1456,28 +1479,5 @@ document.getElementById('showcase-to-seq-btn').addEventListener('click', enterSe
   buildShowcase();
 })();
 </script>
-<!-- ── Help modal ── -->
-<div id="help-modal" class="modal-overlay" hidden>
-  <div class="modal-box">
-    <button class="modal-close" id="help-close">✕</button>
-    <p class="landing-eyebrow" style="margin-bottom:10px">Instructions</p>
-    <h2 class="modal-title">Aarhus Improvisational Rhythm Sequencer (AIRS)</h2>
-    <div class="landing-body">
-      <p>
-        <span class="landing-label">Your job</span>
-        Combine short rhythms into longer sequences in an improvisational way.
-        Don't worry about a final product, just have fun generating sequences that you enjoy in the moment!
-      </p>
-      <p>
-        <span class="landing-label">How it works</span>
-        The sequencer is set up as a grid where each row corresponds to a different short rhythm. As the sequencer moves left to right across the 4 columns, it plays whichever rhythm you have selected by clicking the corresponding square.
-      </p>
-      <p>
-        The rhythms are organized into 3 sets (on the left) with 7 rhythms (rows) per set. Use the <strong>▶</strong> button next to a set to queue it — it will switch at the end of the current bar.
-      </p>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
