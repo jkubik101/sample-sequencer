@@ -571,6 +571,75 @@
   .le-col     { color: var(--muted); flex-shrink: 0; min-width: 44px; }
   .le-file    { color: var(--text); }
   .le-silent  { color: var(--muted); font-style: italic; }
+  /* ── Help button ── */
+  .help-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.1s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .help-btn:hover { border-color: var(--accent); color: var(--text); background: var(--surface); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 24px;
+  }
+
+  .modal-overlay[hidden] { display: none; }
+
+  .modal-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 32px;
+    max-width: 500px;
+    width: 100%;
+    position: relative;
+  }
+
+  .modal-title {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+    color: var(--text);
+    margin-bottom: 20px;
+    line-height: 1.4;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px 4px;
+    transition: color 0.1s;
+  }
+
+  .modal-close:hover { color: var(--text); }
 </style>
 </head>
 <body>
@@ -633,11 +702,7 @@
   <div class="main">
     <header>
       <h1>Aarhus Improvisational Rhythm Sequencer (AIRS)</h1>
-      <div class="step-toggle">
-        <span class="step-label">steps</span>
-        <button class="step-btn active" data-steps="4">4</button>
-        <button class="step-btn" data-steps="8">8</button>
-      </div>
+      <button class="help-btn" id="help-btn" title="Show instructions">?</button>
     </header>
 
     <div class="grid-container">
@@ -1328,6 +1393,11 @@ function buildShowcase() {
   }
 }
 
+// ─── Help modal ───────────────────────────────────────────────────────────────
+const helpModal = document.getElementById('help-modal');
+document.addEventListener('keydown', e => { if (e.key === 'Escape') helpModal.hidden = true; });
+helpModal.addEventListener('click', e => { if (e.target === helpModal) helpModal.hidden = true; });
+
 // ─── Screen switching ─────────────────────────────────────────────────────────
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1345,6 +1415,8 @@ function enterSequencer() {
     initStepToggle();
     playBtn().addEventListener('click', () => isPlaying ? stop() : start());
     initLogButtons();
+    document.getElementById('help-btn').addEventListener('click', () => helpModal.hidden = false);
+    document.getElementById('help-close').addEventListener('click', () => helpModal.hidden = true);
     // Update loading notice and tab dots
     const allFiles = SETS.flat();
     const loaded   = allFiles.filter(f => buffers[f]).length;
@@ -1384,5 +1456,28 @@ document.getElementById('showcase-to-seq-btn').addEventListener('click', enterSe
   buildShowcase();
 })();
 </script>
+<!-- ── Help modal ── -->
+<div id="help-modal" class="modal-overlay" hidden>
+  <div class="modal-box">
+    <button class="modal-close" id="help-close">✕</button>
+    <p class="landing-eyebrow" style="margin-bottom:10px">Instructions</p>
+    <h2 class="modal-title">Aarhus Improvisational Rhythm Sequencer (AIRS)</h2>
+    <div class="landing-body">
+      <p>
+        <span class="landing-label">Your job</span>
+        Combine short rhythms into longer sequences in an improvisational way.
+        Don't worry about a final product, just have fun generating sequences that you enjoy in the moment!
+      </p>
+      <p>
+        <span class="landing-label">How it works</span>
+        The sequencer is set up as a grid where each row corresponds to a different short rhythm. As the sequencer moves left to right across the 4 columns, it plays whichever rhythm you have selected by clicking the corresponding square.
+      </p>
+      <p>
+        The rhythms are organized into 3 sets (on the left) with 7 rhythms (rows) per set. Use the <strong>▶</strong> button next to a set to queue it — it will switch at the end of the current bar.
+      </p>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
