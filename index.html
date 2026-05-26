@@ -790,6 +790,14 @@ function shuffleArr(arr) {
   return a;
 }
 
+// Shuffle rows within each set, then shuffle the order of sets
+for (let s = 0; s < SETS.length; s++) {
+  const shuffled = shuffleArr(SETS[s]);
+  SETS[s].splice(0, SETS[s].length, ...shuffled);
+}
+const shuffledSets = shuffleArr([...SETS]);
+SETS.splice(0, SETS.length, ...shuffledSets);
+
 const SHUFFLED_NAMES = shuffleArr(NAME_POOL);
 const SAMPLE_NAMES  = {};
 SETS.flat().forEach((file, i) => { SAMPLE_NAMES[file] = SHUFFLED_NAMES[i]; });
