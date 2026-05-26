@@ -441,9 +441,12 @@
     font-family: 'DM Mono', monospace;
     font-size: 0.65rem;
     color: var(--muted);
-    width: 26px;
+    width: 72px;
     text-align: right;
     flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .grid-row { display: flex; gap: 6px; flex: 1; }
@@ -576,21 +579,21 @@
     font-family: 'DM Mono', monospace;
     font-size: 0.75rem;
     font-weight: 500;
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
+    background: #e0e0e2;
+    border: none;
+    color: #1c1c1e;
     width: 26px;
     height: 26px;
     border-radius: 50%;
     cursor: pointer;
-    transition: all 0.1s;
+    transition: background 0.1s;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  .help-btn:hover { border-color: var(--accent); color: var(--text); background: var(--surface); }
+  .help-btn:hover { background: #ffffff; }
 
   /* ── Modal ── */
   .modal-overlay {
@@ -935,7 +938,8 @@ function renderGrid() {
 
     const lbl = document.createElement('div');
     lbl.className = 'row-label';
-    lbl.textContent = String(r + 1).padStart(2, '0');
+    lbl.textContent = sampleName(SETS[viewedSet][r]);
+    lbl.title = sampleName(SETS[viewedSet][r]);
     wrap.appendChild(lbl);
 
     const row = document.createElement('div');
