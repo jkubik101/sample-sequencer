@@ -1044,7 +1044,7 @@ function appendLogRow(elapsed, ts, set, col, files) {
     `<span class="le-ts">${ts}</span>` +
     `<span class="le-col">s${set} c${String(col + 1).padStart(2, '0')}</span>` +
     (files.length
-      ? `<span class="le-file">${files.map(f => sampleName(f)).join(", ")}</span>`
+      ? `<span class="le-file">${files.map(f => f.replace(AUDIO_PATH, '')).join(", ")}</span>`
       : `<span class="le-silent">—</span>`);
   panel.appendChild(row);
   panel.scrollTop = panel.scrollHeight;
@@ -1078,7 +1078,7 @@ function downloadLog(entries) {
   if (!entries || entries.length === 0) return;
   const lines = ['elapsed,timestamp,set,col,files'];
   entries.forEach(({elapsed, ts, set, col, files}) =>
-    lines.push(`${elapsed},${ts},${set},${col + 1},"${files.map(f => sampleName(f)).join('; ')}"`)
+    lines.push(`${elapsed},${ts},${set},${col + 1},"${files.map(f => f.replace(AUDIO_PATH, '')).join('; ')}"`)
   );
   const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
   const url  = URL.createObjectURL(blob);
