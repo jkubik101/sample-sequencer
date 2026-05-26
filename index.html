@@ -774,7 +774,7 @@ const SETS = [
   ['4_2','5_3','5_1','4_5','5_2','5_4','5_5'].map(f => `${AUDIO_PATH}${f}.wav`),
 ];
 
-// ── Sample names — shuffled fresh each page load ──────────────────────────────
+// ── Set names — shuffled fresh each page load ─────────────────────────────────
 const NAME_POOL = [
   'Alice','Bruno','Clara','Diego','Elena','Felix','Grace','Hugo',
   'Iris','Jules','Kira','Leon','Mona','Niko','Opal','Pedro',
@@ -790,7 +790,7 @@ function shuffleArr(arr) {
   return a;
 }
 
-// Shuffle rows within each set, then shuffle the order of sets
+// Shuffle rows within each set, then shuffle the sets themselves
 for (let s = 0; s < SETS.length; s++) {
   const shuffled = shuffleArr(SETS[s]);
   SETS[s].splice(0, SETS[s].length, ...shuffled);
@@ -798,11 +798,18 @@ for (let s = 0; s < SETS.length; s++) {
 const shuffledSets = shuffleArr([...SETS]);
 SETS.splice(0, SETS.length, ...shuffledSets);
 
-const SHUFFLED_NAMES = shuffleArr(NAME_POOL);
-const SAMPLE_NAMES  = {};
-SETS.flat().forEach((file, i) => { SAMPLE_NAMES[file] = SHUFFLED_NAMES[i]; });
+// Each set gets one name; samples are SetName_1, SetName_2, …
+const SET_NAMES = shuffleArr(NAME_POOL).slice(0, NUM_SETS);
 
-function sampleName(file) { return SAMPLE_NAMES[file] || file.replace(AUDIO_PATH, ''); }
+function sampleName(file) {
+  for (let s = 0; s < SETS.length; s++) {
+    const r = SETS[s].indexOf(file);
+    if (r !== -1) return `${SET_NAMES[s]}_${r + 1}`;
+  }
+  return file.replace(AUDIO_PATH, '');
+}
+
+function setName(s) { return SET_NAMES[s]; }
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let viewedSet  = 0;
@@ -846,7 +853,7 @@ function buildSetTabs() {
 
     const qBtn = document.createElement('button');
     qBtn.className = 'queue-btn';
-    qBtn.title = `Queue set ${s + 1} to play next`;
+    qBtn.title = `Queue ${setName(s)}`;
     qBtn.textContent = '▶';
     qBtn.addEventListener('click', () => queueSet(s));
 
@@ -857,7 +864,7 @@ function buildSetTabs() {
       `<span class="tab-num">${s + 1}</span>` +
       `<div class="tab-dots">${'<span class="tab-dot"></span>'.repeat(numCols)}</div>` +
       `<span class="dot"></span>`;
-    tab.title = `Set ${s + 1}`;
+    tab.title = setName(s);
     tab.addEventListener('click', () => switchViewedSet(s));
 
     rowEl.appendChild(qBtn);
@@ -1405,7 +1412,7 @@ function buildShowcase() {
 
     const label = document.createElement('span');
     label.className = 'showcase-set-label';
-    label.textContent = `Set ${s + 1}`;
+    label.textContent = setName(s);
 
     const playSetBtn = document.createElement('button');
     playSetBtn.className = 'sc-btn';
