@@ -771,6 +771,28 @@ const SETS = [
   ['4_2','5_3','5_1','4_5','5_2','5_4','5_5'].map(f => `${AUDIO_PATH}${f}.wav`),
 ];
 
+// ── Sample names — shuffled fresh each page load ──────────────────────────────
+const NAME_POOL = [
+  'Alice','Bruno','Clara','Diego','Elena','Felix','Grace','Hugo',
+  'Iris','Jules','Kira','Leon','Mona','Niko','Opal','Pedro',
+  'Quinn','Rosa','Sven','Tara','Uma'
+];
+
+function shuffleArr(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const SHUFFLED_NAMES = shuffleArr(NAME_POOL);
+const SAMPLE_NAMES  = {};
+SETS.flat().forEach((file, i) => { SAMPLE_NAMES[file] = SHUFFLED_NAMES[i]; });
+
+function sampleName(file) { return SAMPLE_NAMES[file] || file.replace(AUDIO_PATH, ''); }
+
 // ─── State ────────────────────────────────────────────────────────────────────
 let viewedSet  = 0;
 let playingSet = 0;
@@ -1010,7 +1032,7 @@ function appendLogRow(elapsed, ts, set, col, files) {
     `<span class="le-ts">${ts}</span>` +
     `<span class="le-col">s${set} c${String(col + 1).padStart(2, '0')}</span>` +
     (files.length
-      ? `<span class="le-file">${files.map(f => f.replace(AUDIO_PATH, '')).join(', ')}</span>`
+      ? `<span class="le-file">${files.map(f => sampleName(f)).join(", ")}</span>`
       : `<span class="le-silent">—</span>`);
   panel.appendChild(row);
   panel.scrollTop = panel.scrollHeight;
@@ -1044,7 +1066,7 @@ function downloadLog(entries) {
   if (!entries || entries.length === 0) return;
   const lines = ['elapsed,timestamp,set,col,files'];
   entries.forEach(({elapsed, ts, set, col, files}) =>
-    lines.push(`${elapsed},${ts},${set},${col + 1},"${files.map(f => f.replace(AUDIO_PATH, '')).join('; ')}"`)
+    lines.push(`${elapsed},${ts},${set},${col + 1},"${files.map(f => sampleName(f)).join('; ')}"`)
   );
   const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
   const url  = URL.createObjectURL(blob);
@@ -1236,7 +1258,7 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
   // Toggle off — stopping early does NOT count as heard
   if (scPlaying[key]) {
     scStop(key);
-    btnEl.textContent = file.replace(AUDIO_PATH, '');
+    btnEl.textContent = sampleName(file);
     btnEl.classList.remove('playing');
     return;
   }
@@ -1253,14 +1275,14 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
   src.start();
 
   scPlaying[key] = { sources: [src] };
-  btnEl.textContent = '■ ' + file.replace(AUDIO_PATH, '');
+  btnEl.textContent = '■ ' + sampleName(file);
   btnEl.classList.add('playing');
 
   src.onended = () => {
     // Only counts if it wasn't manually stopped
     if (scPlaying[key]) {
       delete scPlaying[key];
-      btnEl.textContent = file.replace(AUDIO_PATH, '');
+      btnEl.textContent = sampleName(file);
       btnEl.classList.remove('playing');
       markSampleHeard(setIdx, rowIdx);
     }
@@ -1306,14 +1328,14 @@ function scPlaySetSequential(setIdx, btnEl, rowIdx = 0) {
   scPlaying[key].sources = [src];
 
   if (sampleBtn) {
-    sampleBtn.textContent = '■ ' + file.replace(AUDIO_PATH, '');
+    sampleBtn.textContent = '■ ' + sampleName(file);
     sampleBtn.classList.add('playing');
   }
 
   src.onended = () => {
     if (!scPlaying[key]) return; // was stopped early — don't mark heard
     if (sampleBtn) {
-      sampleBtn.textContent = file.replace(AUDIO_PATH, '');
+      sampleBtn.textContent = sampleName(file);
       sampleBtn.classList.remove('playing');
     }
     markSampleHeard(setIdx, rowIdx);
@@ -1333,7 +1355,7 @@ function scPlaySet(setIdx, btnEl) {
     // Clear any playing highlights on sample buttons
     for (let r = 0; r < NUM_ROWS; r++) {
       const sb = document.querySelector(`.sc-sample-btn[data-set="${setIdx}"][data-row="${r}"]`);
-      if (sb) { sb.textContent = SETS[setIdx][r].replace(AUDIO_PATH, ''); sb.classList.remove('playing'); }
+      if (sb) { sb.textContent = sampleName(SETS[setIdx][r]); sb.classList.remove('playing'); }
     }
     return;
   }
@@ -1344,7 +1366,7 @@ function scPlaySet(setIdx, btnEl) {
     if (scPlaying[sk]) {
       scStop(sk);
       const sb = document.querySelector(`.sc-sample-btn[data-set="${setIdx}"][data-row="${r}"]`);
-      if (sb) { sb.textContent = SETS[setIdx][r].replace(AUDIO_PATH, ''); sb.classList.remove('playing'); }
+      if (sb) { sb.textContent = sampleName(SETS[setIdx][r]); sb.classList.remove('playing'); }
     }
   }
 
@@ -1399,8 +1421,8 @@ function buildShowcase() {
       sampleBtn.dataset.set = s;
       sampleBtn.dataset.row = r;
       sampleBtn.textContent = buffers[file]
-        ? file.replace(AUDIO_PATH, '')
-        : file.replace(AUDIO_PATH, '') + ' (loading…)';
+        ? sampleName(file)
+        : sampleName(file) + ' (loading…)';
       sampleBtn.addEventListener('click', () => {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         scPlaySample(s, r, sampleBtn);
