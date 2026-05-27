@@ -666,11 +666,12 @@
         The rhythms are organized into 3 sets, representing 3 different drummers with 7 'signature' rhythms each. You can navigate between sets as the sequence plays but it won't switch between sets until it reaches the end (last column) of the current set.
       </p>
       <p>
-        First we will get you to listen to each rhythm so that you know what you are working with. Click <strong>'Explore the sets'</strong> to have a listen. 
+          If you need a reminder of these instructions while sequencing, click on the question mark in the top right
       </p>
       <p>
-        If you need a reminder of these instructions, click on the question mark in the top right
+        First we will get you to listen to each rhythm so that you know what you are working with. Click <strong>'Explore the sets'</strong> to have a listen. 
       </p>
+
     </div>
     <div class="images">
       <figure>
@@ -685,8 +686,8 @@
     </div>
    
     <div class="landing-actions">
-      <button class="nav-btn primary" id="to-showcase-btn">Explore sets first →</button>
-      <button class="nav-btn primary" id="instructions-to-seq-btn">Get Started</button>
+      <button class="nav-btn primary" id="to-showcase-btn">Explore the Sets</button>
+      <!-- <button class="nav-btn primary" id="instructions-to-seq-btn">Get Started</button> -->
     </div>
 
   </div>
@@ -698,7 +699,7 @@
     <p class="landing-eyebrow">Before you begin</p>
     <h2 class="landing-title">Explore the Sets</h2>
     <div class="showcase-intro">
-      Please listen to all the rhythms before proceeding — you must hear every sample in each set before you can get started. You can listen to a full set in sequence, or explore individual samples one by one. A set will be marked as heard once all its rhythms have been played through to completion.
+      Please listen to all the rhythms before proceeding — you must hear every sample in each set before you can get started. You can listen to a full set in sequence, or explore individual rhythms one by one. A set will be marked as heard once all its rhythms have been played through to completion.
     </div>
     <div class="showcase-sets" id="showcase-sets">
       <!-- injected by JS -->
@@ -1286,6 +1287,7 @@ function scStopAll() {
 }
 
 function scPlaySample(setIdx, rowIdx, btnEl) {
+  scStopAll(); // stop any other playing samples or sets to avoid overlap
   const key  = `${setIdx}-${rowIdx}`;
   const file = SETS[setIdx][rowIdx];
   if (!buffers[file]) return;
@@ -1326,6 +1328,7 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
 
 // Play samples in the set one after another
 function scPlaySetSequential(setIdx, btnEl, rowIdx = 0) {
+  scStopAll(); // stop any other playing samples or sets to avoid overlap
   const key = `set-${setIdx}`;
 
   // If cancelled (key gone), stop the chain
@@ -1503,10 +1506,10 @@ function enterSequencer() {
     const notice   = loadingNotice();
     if (notice) {
       notice.textContent = loaded === allFiles.length
-        ? `${loaded} samples loaded. Ready.`
+        ? `${loaded} rhythms loaded. Ready.`
         : loaded === 0
-        ? 'No samples loaded. Make sure you\'re running via a local server.'
-        : `${loaded}/${allFiles.length} samples loaded.`;
+        ? 'No rhythms loaded. Make sure you\'re running via a local server.'
+        : `${loaded}/${allFiles.length} rhythms loaded.`;
     }
     for (let s = 0; s < NUM_SETS; s++) {
       const n = SETS[s].filter(f => buffers[f]).length;
@@ -1517,7 +1520,7 @@ function enterSequencer() {
 }
 
 document.getElementById('to-showcase-btn').addEventListener('click', () => showScreen('showcase'));
-document.getElementById('instructions-to-seq-btn').addEventListener('click', enterSequencer);
+// document.getElementById('instructions-to-seq-btn').addEventListener('click', enterSequencer);
 document.getElementById('showcase-back-btn').addEventListener('click', () => showScreen('instructions'));
 document.getElementById('showcase-to-seq-btn').addEventListener('click', enterSequencer);
 
