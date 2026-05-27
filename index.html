@@ -1287,7 +1287,6 @@ function scStopAll() {
 }
 
 function scPlaySample(setIdx, rowIdx, btnEl) {
-  scStopAll(); // stop any other playing samples or sets to avoid overlap
   const key  = `${setIdx}-${rowIdx}`;
   const file = SETS[setIdx][rowIdx];
   if (!buffers[file]) return;
@@ -1299,6 +1298,8 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
     btnEl.classList.remove('playing');
     return;
   }
+
+  scStopAll(); // stop any other playing samples or sets to avoid overlap
 
   // Stop whole-set playback for this set if running
   scStop(`set-${setIdx}`);
@@ -1397,6 +1398,8 @@ function scPlaySet(setIdx, btnEl) {
     }
     return;
   }
+
+  scStopAll(); // stop any other playing samples or sets to avoid overlap
 
   // Stop any individual sample previews for this set
   for (let r = 0; r < NUM_ROWS; r++) {
