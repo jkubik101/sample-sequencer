@@ -1291,20 +1291,16 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
   const file = SETS[setIdx][rowIdx];
   if (!buffers[file]) return;
 
-  // Toggle off — stopping early does NOT count as heard
-  if (scPlaying[key]) {
-    scStop(key);
-    btnEl.textContent = sampleName(file);
-    btnEl.classList.remove('playing');
-    return;
-  }
-
-  scStopAll(); // stop any other playing samples or sets to avoid overlap
-
-  // Stop whole-set playback for this set if running
-  scStop(`set-${setIdx}`);
-  document.querySelectorAll(`.sc-btn[data-set="${setIdx}"]`)
-    .forEach(b => { b.textContent = '▶ play set'; b.classList.remove('playing'); });
+  // Stop any currently playing sample before starting a new one
+  Object.keys(scPlaying).forEach(k => {
+    const parts = k.split('-');
+    const prevBtn = document.querySelector(`.sc-sample-btn[data-set="${parts[0]}"][data-row="${parts[1]}"]`);
+    scStop(k);
+    if (prevBtn) {
+      prevBtn.textContent = sampleName(SETS[parts[0]][parts[1]]);
+      prevBtn.classList.remove('playing');
+    }
+  });
 
   const src = audioCtx.createBufferSource();
   src.buffer = buffers[file];
@@ -1329,7 +1325,6 @@ function scPlaySample(setIdx, rowIdx, btnEl) {
 
 // Play samples in the set one after another
 function scPlaySetSequential(setIdx, btnEl, rowIdx = 0) {
-  scStopAll(); // stop any other playing samples or sets to avoid overlap
   const key = `set-${setIdx}`;
 
   // If cancelled (key gone), stop the chain
@@ -1399,8 +1394,6 @@ function scPlaySet(setIdx, btnEl) {
     return;
   }
 
-  scStopAll(); // stop any other playing samples or sets to avoid overlap
-
   // Stop any individual sample previews for this set
   for (let r = 0; r < NUM_ROWS; r++) {
     const sk = `${setIdx}-${r}`;
@@ -1436,14 +1429,7 @@ function buildShowcase() {
     label.className = 'showcase-set-label';
     label.textContent = setName(s);
 
-    const playSetBtn = document.createElement('button');
-    playSetBtn.className = 'sc-btn';
-    playSetBtn.dataset.set = s;
-    playSetBtn.textContent = '▶ play set';
-    playSetBtn.addEventListener('click', () => scPlaySet(s, playSetBtn));
-
     header.appendChild(label);
-    header.appendChild(playSetBtn);
     setEl.appendChild(header);
 
     const samplesEl = document.createElement('div');
