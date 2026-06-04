@@ -481,11 +481,11 @@
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.1s;
-    min-width: 80px;
+    min-width: 160px;
   }
 
   .play-btn:hover   { border-color: var(--accent); background: var(--surface); }
-  .play-btn.playing { border-color: var(--accent); }
+  .play-btn.playing { border-color: #4a8a4a; color: #7ecf7e; background: #1a2e1a; }
 
   .status {
     font-family: 'DM Mono', monospace;
@@ -1204,7 +1204,7 @@ async function start() {
   if (audioCtx.state === 'suspended') await audioCtx.resume();
 
   isPlaying = true;
-  playBtn().textContent = 'Stop';
+  playBtn().textContent = 'Finish exploration';
   playBtn().classList.add('playing');
   statusEl().textContent = 'playing';
   statusEl().classList.remove('error');
