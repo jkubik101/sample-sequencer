@@ -504,76 +504,6 @@
     line-height: 1.8;
   }
 
-  /* ── Log ── */
-  .log-section { margin-top: 20px; }
-
-  .log-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-
-  .log-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    flex: 1;
-  }
-
-  .log-btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 3px 8px;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.1s;
-    white-space: nowrap;
-  }
-
-  .log-btn:hover  { border-color: var(--accent); color: var(--text); }
-  .log-btn.active { border-color: var(--accent); color: var(--text); background: var(--surface); }
-
-  .log-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 12px 14px;
-    max-height: 180px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-  }
-
-  .log-panel::-webkit-scrollbar       { width: 4px; }
-  .log-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .log-panel.hidden { display: none; }
-
-  .log-empty {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--muted);
-    font-style: italic;
-  }
-
-  .log-entry {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    line-height: 1.9;
-    display: flex;
-    gap: 10px;
-  }
-
-  .le-elapsed { color: var(--muted); flex-shrink: 0; min-width: 54px; }
-  .le-ts      { color: var(--muted); flex-shrink: 0; }
-  .le-col     { color: var(--muted); flex-shrink: 0; min-width: 44px; }
-  .le-file    { color: var(--text); }
-  .le-silent  { color: var(--muted); font-style: italic; }
   /* ── Help button ── */
   .help-btn {
     font-family: 'DM Mono', monospace;
@@ -739,16 +669,7 @@
 
     <div id="loading-notice"></div>
 
-    <div class="log-section">
-      <div class="log-toolbar">
-        <span class="log-title">Log</span>
-        <button class="log-btn active" id="log-toggle-btn">Hide</button>
-        <button class="log-btn" id="log-download-btn">Download</button>
-      </div>
-      <div class="log-panel" id="log-panel">
-        <span class="log-empty">No entries yet — press Play to start logging.</span>
-      </div>
-    </div>
+
   </div>
 </div>
 </div>
@@ -859,9 +780,6 @@ const indicatorsEl  = () => document.getElementById('col-indicators');
 const playBtn       = () => document.getElementById('play-btn');
 const statusEl      = () => document.getElementById('status');
 const loadingNotice = () => document.getElementById('loading-notice');
-const logPanel      = () => document.getElementById('log-panel');
-const logToggleBtn  = () => document.getElementById('log-toggle-btn');
-const logDownloadBtn= () => document.getElementById('log-download-btn');
 
 // ─── Set tabs ─────────────────────────────────────────────────────────────────
 function buildSetTabs() {
@@ -1054,50 +972,14 @@ function updateStatus() {
 // ─── Logging ──────────────────────────────────────────────────────────────────
 let logEntries     = [];
 let prevLogEntries = [];
-let logVisible     = true;
 let playStartTs    = null;
 let playStartCtx   = null;
-
-function appendLogRow(elapsed, ts, set, col, files) {
-  const panel = logPanel();
-  const empty = panel.querySelector('.log-empty');
-  if (empty) empty.remove();
-
-  const row = document.createElement('div');
-  row.className = 'log-entry';
-  row.innerHTML =
-    `<span class="le-elapsed">${elapsed}</span>` +
-    `<span class="le-ts">${ts}</span>` +
-    `<span class="le-col">s${set} c${String(col + 1).padStart(2, '0')}</span>` +
-    (files.length
-      ? `<span class="le-file">${files.map(f => f.replace(AUDIO_PATH, '')).join(", ")}</span>`
-      : `<span class="le-silent">—</span>`);
-  panel.appendChild(row);
-  panel.scrollTop = panel.scrollHeight;
-}
-
-function rebuildLogPanel() {
-  const panel = logPanel();
-  panel.innerHTML = '';
-  if (logEntries.length === 0) {
-    panel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
-    return;
-  }
-  logEntries.forEach(({elapsed, ts, set, col, files}) => appendLogRow(elapsed, ts, set, col, files));
-}
 
 function resetLog() {
   prevLogEntries = logEntries.length ? [...logEntries] : prevLogEntries;
   logEntries   = [];
   playStartTs  = null;
   playStartCtx = null;
-  const dlBtn = logDownloadBtn();
-  if (dlBtn) {
-    dlBtn.textContent = prevLogEntries.length ? 'Download prev' : 'Download';
-    dlBtn.classList.toggle('active', prevLogEntries.length > 0);
-  }
-  const panel = logPanel();
-  if (panel) panel.innerHTML = '<span class="log-empty">No entries yet — press Play to start logging.</span>';
 }
 
 function downloadLog(entries) {
@@ -1113,18 +995,6 @@ function downloadLog(entries) {
   a.download = `sequencer-log-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-function initLogButtons() {
-  logToggleBtn().addEventListener('click', () => {
-    logVisible = !logVisible;
-    logPanel().classList.toggle('hidden', !logVisible);
-    logToggleBtn().textContent = logVisible ? 'Hide' : 'Show';
-    logToggleBtn().classList.toggle('active', logVisible);
-    if (logVisible) rebuildLogPanel();
-  });
-  logDownloadBtn().addEventListener('click', () =>
-    downloadLog(logEntries.length ? logEntries : prevLogEntries));
 }
 
 // ─── Scheduler ────────────────────────────────────────────────────────────────
@@ -1194,7 +1064,6 @@ function visualLoop() {
     const wallMs  = playStartTs.getTime() + elapsedSec * 1000;
     const ts      = new Date(wallMs).toTimeString().slice(0, 8);
     logEntries.push({elapsed, ts, set: entry.scheduledSet + 1, col: entry.col, files: entry.logFiles});
-    if (logVisible) appendLogRow(elapsed, ts, entry.scheduledSet + 1, entry.col, entry.logFiles);
   }
   requestAnimationFrame(visualLoop);
 }
@@ -1219,9 +1088,6 @@ async function start() {
   playStartCtx = nextStepTime;
   playStartTs  = new Date(Date.now() + 0.05 * 1000);
 
-  logDownloadBtn().textContent = 'Download';
-  logDownloadBtn().classList.remove('active');
-
   scheduleAhead();
   requestAnimationFrame(visualLoop);
 }
@@ -1240,6 +1106,7 @@ function stop() {
   queuedSet = null;
   refreshTabClasses();
   updateStatus();
+  downloadLog(logEntries);
   resetLog();
 }
 
@@ -1488,7 +1355,6 @@ function enterSequencer() {
     renderGrid();
     initStepToggle();
     playBtn().addEventListener('click', () => isPlaying ? stop() : start());
-    initLogButtons();
     document.getElementById('help-btn').addEventListener('click', () => helpModal.hidden = false);
     document.getElementById('help-close').addEventListener('click', () => helpModal.hidden = true);
     // Update loading notice and tab dots
