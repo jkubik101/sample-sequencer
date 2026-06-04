@@ -1465,8 +1465,19 @@ function enterSequencer() {
     // Setup Timer Toggle button logic
     const timerBtn = document.getElementById('timer-btn');
     const timerPopup = document.getElementById('timer-popup');
-    timerBtn.addEventListener('click', () => {
+    
+    // Toggle when clicking the button
+    timerBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevents the window click listener from immediately closing it
       timerPopup.hidden = !timerPopup.hidden;
+    });
+
+    // Close when clicking anywhere else on the screen
+    window.addEventListener('click', (e) => {
+      // If the popup is open, and the click wasn't inside the popup itself
+      if (!timerPopup.hidden && !timerPopup.contains(e.target)) {
+        timerPopup.hidden = true;
+      }
     });
 
     // Update loading notice and tab dots
