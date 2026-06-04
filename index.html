@@ -619,6 +619,11 @@
   }
 
   .modal-close:hover { color: var(--text); }
+
+  .timer-reached {
+  color: #34c759 !important; /* A clean, vibrant green */
+  font-weight: 500;
+}
 </style>
 </head>
 <body>
@@ -831,6 +836,9 @@ let nextStepTime   = 0;
 let nextStepCol    = 0;
 let nextPlayingSet = 0;
 let pendingVisual  = [];
+
+// Timer interval state tracking
+let visualTimerInterval = null;
 
 // ─── DOM refs (lazy — sequencer screen hidden at parse time) ──────────────────
 const setTabsEl     = () => document.getElementById('set-tabs');
@@ -1127,6 +1135,41 @@ function visualLoop() {
   requestAnimationFrame(visualLoop);
 }
 
+// ─── UI Elapsed Timer Execution ───────────────────────────────────────────────
+function startElapsedTimeUI() {
+  const timerDisplay = document.getElementById('timer-display');
+  if (visualTimerInterval) clearInterval(visualTimerInterval);
+  
+  visualTimerInterval = setInterval(() => {
+    if (!isPlaying || !playStartCtx) return;
+    const elapsedSec = audioCtx.currentTime - playStartCtx;
+    if (elapsedSec < 0) return;
+    
+    const mm = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+    const ss = String(Math.floor(elapsedSec % 60)).padStart(2, '0');
+    timerDisplay.textContent = `${mm}:${ss}`;
+
+    // Turn green when elapsed time reaches or exceeds 10 minutes (600 seconds)
+    if (elapsedSec >= 600) {
+      timerDisplay.classList.add('timer-reached');
+    } else {
+      timerDisplay.classList.remove('timer-reached');
+    }
+  }, 250); // Checks 4 times a second for snappy UI updating
+}
+
+function stopElapsedTimeUI() {
+  if (visualTimerInterval) {
+    clearInterval(visualTimerInterval);
+    visualTimerInterval = null;
+  }
+  // Reset the color back to normal when stopping/finishing exploration
+  const timerDisplay = document.getElementById('timer-display');
+  if (timerDisplay) {
+    timerDisplay.classList.remove('timer-reached');
+  }
+}
+
 // ─── Play / Stop ──────────────────────────────────────────────────────────────
 async function start() {
   if (audioCtx.state === 'suspended') await audioCtx.resume();
@@ -1149,6 +1192,7 @@ async function start() {
 
   scheduleAhead();
   requestAnimationFrame(visualLoop);
+  startElapsedTimeUI();
 }
 
 function stop() {
@@ -1167,6 +1211,7 @@ function stop() {
   updateStatus();
   downloadLog(logEntries);
   resetLog();
+  stopElapsedTimeUI();
 }
 
 // ─── Showcase ─────────────────────────────────────────────────────────────────
@@ -1416,6 +1461,14 @@ function enterSequencer() {
     playBtn().addEventListener('click', () => isPlaying ? stop() : start());
     document.getElementById('help-btn').addEventListener('click', () => helpModal.hidden = false);
     document.getElementById('help-close').addEventListener('click', () => helpModal.hidden = true);
+    
+    // Setup Timer Toggle button logic
+    const timerBtn = document.getElementById('timer-btn');
+    const timerPopup = document.getElementById('timer-popup');
+    timerBtn.addEventListener('click', () => {
+      timerPopup.hidden = !timerPopup.hidden;
+    });
+
     // Update loading notice and tab dots
     const allFiles = SETS.flat();
     const loaded   = allFiles.filter(f => buffers[f]).length;
