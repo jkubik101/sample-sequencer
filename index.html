@@ -482,11 +482,45 @@
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.1s;
-    min-width: 160px;
+    min-width: 80px;
   }
 
   .play-btn:hover   { border-color: var(--accent); background: var(--surface); }
   .play-btn.playing { border-color: #4a8a4a; color: #7ecf7e; background: #1a2e1a; }
+
+  .pause-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.1s;
+    min-width: 80px;
+  }
+
+  .pause-btn:hover { border-color: var(--accent); background: var(--surface); }
+
+  .finish-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: #1a2e1a;
+    border: 1px solid #4a8a4a;
+    color: #7ecf7e;
+    padding: 9px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.1s;
+    min-width: 160px;
+  }
+
+  .finish-btn:hover { border-color: #6abf6a; background: #1e361e; }
 
   .status {
     font-family: 'DM Mono', monospace;
@@ -723,6 +757,8 @@
 
     <div class="controls">
       <button class="play-btn" id="play-btn">Play</button>
+      <button class="pause-btn" id="pause-btn" hidden>Pause</button>
+      <button class="finish-btn" id="finish-btn" hidden>Finish exploration</button>
       <span class="status" id="status">stopped</span>
     </div>
 
@@ -837,6 +873,8 @@ const setTabsEl     = () => document.getElementById('set-tabs');
 const gridEl        = () => document.getElementById('grid');
 const indicatorsEl  = () => document.getElementById('col-indicators');
 const playBtn       = () => document.getElementById('play-btn');
+const pauseBtn      = () => document.getElementById('pause-btn');
+const finishBtn     = () => document.getElementById('finish-btn');
 const statusEl      = () => document.getElementById('status');
 const loadingNotice = () => document.getElementById('loading-notice');
 
@@ -1100,7 +1138,7 @@ function scheduleAhead() {
 }
 
 function visualLoop() {
-  if (!isPlaying) return;
+  if (!isPlaying || isPaused) return;
   const now = audioCtx.currentTime;
   while (pendingVisual.length && pendingVisual[0].time <= now) {
     const entry = pendingVisual.shift();
@@ -1127,13 +1165,35 @@ function visualLoop() {
   requestAnimationFrame(visualLoop);
 }
 
-// ─── Play / Stop ──────────────────────────────────────────────────────────────
+// ─── Play / Pause / Finish ────────────────────────────────────────────────────
+let isPaused = false;
+
+function setControlsPlaying() {
+  playBtn().hidden  = true;
+  pauseBtn().hidden = false;
+  pauseBtn().textContent = 'Pause';
+  finishBtn().hidden = false;
+}
+
+function setControlsPaused() {
+  playBtn().hidden  = true;
+  pauseBtn().hidden = false;
+  pauseBtn().textContent = 'Resume';
+  finishBtn().hidden = false;
+}
+
+function setControlsStopped() {
+  playBtn().hidden  = false;
+  pauseBtn().hidden = true;
+  finishBtn().hidden = true;
+}
+
 async function start() {
   if (audioCtx.state === 'suspended') await audioCtx.resume();
 
   isPlaying = true;
-  playBtn().textContent = 'Finish exploration';
-  playBtn().classList.add('playing');
+  isPaused  = false;
+  setControlsPlaying();
   statusEl().textContent = 'playing';
   statusEl().classList.remove('error');
   startTimerTick();
@@ -1152,15 +1212,49 @@ async function start() {
   requestAnimationFrame(visualLoop);
 }
 
-function stop() {
+async function pause() {
+  if (!isPlaying || isPaused) return;
+  isPaused  = true;
   isPlaying = false;
   clearTimeout(scheduleTimer);
   scheduleTimer = null;
   pendingVisual = [];
-  currentCol    = -1;
+  await audioCtx.suspend();
+  stopTimerTick();
+  setColHighlight(-1);
+  updateBarDots(-1, -1);
+  setControlsPaused();
+  statusEl().textContent = 'paused';
+}
 
-  playBtn().textContent = 'Play';
-  playBtn().classList.remove('playing');
+async function resume() {
+  if (!isPaused) return;
+  await audioCtx.resume();
+  isPaused  = false;
+  isPlaying = true;
+
+  // Re-anchor timing from now
+  nextStepTime   = audioCtx.currentTime + 0.05;
+  nextStepCol    = 0;        // restart bar from col 0
+  pendingVisual  = [];
+
+  setControlsPlaying();
+  statusEl().textContent = 'playing';
+  startTimerTick();
+  scheduleAhead();
+  requestAnimationFrame(visualLoop);
+}
+
+function finish() {
+  isPlaying = false;
+  isPaused  = false;
+  clearTimeout(scheduleTimer);
+  scheduleTimer = null;
+  pendingVisual = [];
+  currentCol    = -1;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  setControlsStopped();
   stopTimerTick();
   setColHighlight(-1);
   updateBarDots(-1, -1);
@@ -1468,7 +1562,9 @@ function enterSequencer() {
     buildSetTabs();
     renderGrid();
     initStepToggle();
-    playBtn().addEventListener('click', () => isPlaying ? stop() : start());
+    playBtn().addEventListener('click', () => start());
+    pauseBtn().addEventListener('click', () => isPaused ? resume() : pause());
+    finishBtn().addEventListener('click', () => finish());
     document.getElementById('help-btn').addEventListener('click', () => helpModal.hidden = false);
     document.getElementById('help-close').addEventListener('click', () => helpModal.hidden = true);
     initTimer();
